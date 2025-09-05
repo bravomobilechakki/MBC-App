@@ -1,15 +1,66 @@
-
-import React from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import React, { useRef } from "react";
+import { View, StyleSheet, TouchableOpacity, Animated, Image } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import Ionicons from "react-native-vector-icons/Ionicons"; // ✅ keep vector icons for profile & menu
 
 const Navbar = () => {
+  const menuAnimation = useRef(new Animated.Value(0)).current;
+  const navigation = useNavigation();
+
+  const toggleMenu = () => {
+    Animated.timing(menuAnimation, {
+      toValue: menuAnimation._value === 0 ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const menuIconRotation = menuAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "90deg"],
+  });
+
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>MyApp</Text>
-      <TextInput style={styles.searchBar} placeholder="Search" />
+      {/* ✅ Menu Icon */}
+      {/* ✅ Menu Icon (custom image instead of Ionicon) */}
+<TouchableOpacity onPress={toggleMenu}>
+  <Animated.View style={{ transform: [{ rotate: menuIconRotation }] }}>
+    <Image
+      source={require("../images/menu.png")} // 👉 replace with your menu image
+      style={styles.menuIcon}
+      resizeMode="contain"
+    />
+  </Animated.View>
+</TouchableOpacity>
+
+
+      {/* ✅ Logo Image */}
+      <Image
+        source={require("../images/logo1.png")}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+
+      {/* ✅ Right Side Icons */}
       <View style={styles.iconsContainer}>
-        <Text style={styles.icon}>Cart</Text>
-        <Text style={styles.icon}>User</Text>
+        {/* Custom cart image */}
+        <TouchableOpacity onPress={() => navigation.navigate("Cart")}>
+          <Image
+            source={require("../images/cart.png")}
+            style={styles.cartIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
+
+        {/* Profile using Ionicon */}
+           <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+          <Image
+            source={require("../images/user.png")}
+            style={styles.cartIcon}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -17,32 +68,31 @@ const Navbar = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 10,
-    backgroundColor: '#f8f8f8',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    backgroundColor: "#eff7f2ff",
   },
   logo: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  searchBar: {
-    flex: 1,
+    width: 120,
     height: 40,
-    backgroundColor: '#fff',
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginHorizontal: 10,
   },
   iconsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
+    gap:20,
+    alignItems: "center",
   },
-  icon: {
-    marginLeft: 15,
+  cartIcon: {
+    width: 27,   // adjust size to match Ionicon
+    height: 27,
   },
+  menuIcon: {
+  width: 28,   // same size as Ionicon for balance
+  height: 28,
+
+},
+
 });
 
 export default Navbar;

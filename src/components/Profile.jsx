@@ -1,0 +1,155 @@
+import React from "react";
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from "react-native";
+import Ionicons from "react-native-vector-icons/Ionicons";
+
+import { useNavigation } from "@react-navigation/native";
+
+const Profile = () => {
+  const navigation = useNavigation();
+
+  return (
+    <ScrollView style={styles.container}>
+      {/* ✅ Back Arrow Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.navigate("Home")}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <View style={{ width: 24 }} /> {/* spacer */}
+      </View>
+
+      {/* User Info Section */}
+      <View style={styles.profileHeader}>
+        <Image
+          source={{ uri: "https://i.pravatar.cc/150?img=12" }}
+          style={styles.avatar}
+        />
+        <View>
+          <Text style={styles.name}>Monika Rathore</Text>
+          <Text style={styles.email}>john.doe@example.com</Text>
+        </View>
+      </View>
+
+      {/* Divider */}
+      <View style={styles.divider} />
+
+      {/* Account Options */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>My Account</Text>
+        <TouchableOpacity style={styles.option}>
+          <Text style={styles.optionText}>My Orders</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.option}>
+          <Text style={styles.optionText}>Wishlist</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.option}>
+          <Text style={styles.optionText}>Payment Methods</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.option}>
+          <Text style={styles.optionText}>Shipping Address</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Divider */}
+      <View style={styles.divider} />
+
+      {/* Settings */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Settings</Text>
+        <TouchableOpacity style={styles.option}>
+          <Text style={styles.optionText}>Notifications</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.option}>
+          <Text style={styles.optionText}>Privacy Policy</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.option}>
+          <Text style={styles.optionText}>Help & Support</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Divider */}
+      <View style={styles.divider} />
+
+      {/* Logout */}
+      <TouchableOpacity style={[styles.option, { backgroundColor: "#FF4D4D", borderBottomWidth: 0 }]}>
+        <Text style={[styles.optionText, { color: "#fff", textAlign: "center" }]}>
+          Logout
+        </Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F9F9F9",
+    padding: 16,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  profileHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
+  },
+  avatar: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    marginRight: 16,
+  },
+  name: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  email: {
+    fontSize: 14,
+    color: "#777",
+    marginTop: 4,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#E5E5E5",
+    marginVertical: 12,
+  },
+  section: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    elevation: 1,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+    color: "#444",
+  },
+  option: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5E5",
+  },
+  optionText: {
+    fontSize: 15,
+    color: "#333",
+  },
+});
+
+export default Profile;

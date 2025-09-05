@@ -1,28 +1,52 @@
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import React from 'react';
-import {Text, View, StyleSheet} from 'react-native';
-import Navbar from '../components/Navbar';
+// Components
 
-const App = () => {
+
+
+// Screens
+import Profile from "../components/Profile";
+import Cart from "../components/Cart";
+import Search from "../components/Search";
+import Navbar from "../components/Navbar";
+import Dashboard from "../components/dashboard/Dashboard";
+import { ScrollView } from "react-native";
+
+
+
+const Stack = createNativeStackNavigator();
+
+const Home = () => {
   return (
     <View style={styles.container}>
       <Navbar />
-      <View style={styles.content}>
-        <Text>Hello World</Text>
-      </View>
+      {/* ✅ Everything scrolls together */}
+      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+        <Search />
+        <Dashboard />
+      </ScrollView>
     </View>
   );
 };
 
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Profile" component={Profile} />
+        <Stack.Screen name="Cart" component={Cart} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#fff",
   },
 });
-
-export default App;
