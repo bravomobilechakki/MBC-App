@@ -1,7 +1,6 @@
-import React from "react";
+ import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
-
 import { useNavigation } from "@react-navigation/native";
 
 const Profile = () => {
@@ -36,16 +35,20 @@ const Profile = () => {
       {/* Account Options */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>My Account</Text>
-        <TouchableOpacity style={styles.option}>
+
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Orders")}>
           <Text style={styles.optionText}>My Orders</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.option}>
+
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Wishlist")}>
           <Text style={styles.optionText}>Wishlist</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.option}>
+
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Payment")}>
           <Text style={styles.optionText}>Payment Methods</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.option}>
+
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Address")}>
           <Text style={styles.optionText}>Shipping Address</Text>
         </TouchableOpacity>
       </View>
@@ -56,13 +59,16 @@ const Profile = () => {
       {/* Settings */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Settings</Text>
-        <TouchableOpacity style={styles.option}>
+
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Notifications")}>
           <Text style={styles.optionText}>Notifications</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.option}>
+
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("PrivacyPolicy")}>
           <Text style={styles.optionText}>Privacy Policy</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.option}>
+
+        <TouchableOpacity style={styles.option} onPress={() => navigation.navigate("Support")}>
           <Text style={styles.optionText}>Help & Support</Text>
         </TouchableOpacity>
       </View>
@@ -71,7 +77,10 @@ const Profile = () => {
       <View style={styles.divider} />
 
       {/* Logout */}
-      <TouchableOpacity style={[styles.option, { backgroundColor: "#FF4D4D", borderBottomWidth: 0 }]}>
+      <TouchableOpacity
+        style={[styles.option, { backgroundColor: "#FF4D4D", borderBottomWidth: 0 }]}
+        onPress={() => navigation.replace("Login")} // Replace with your auth screen
+      >
         <Text style={[styles.optionText, { color: "#fff", textAlign: "center" }]}>
           Logout
         </Text>
@@ -93,8 +102,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
-    textAlign: "center",
-    fontSize: 18,
+  marginLeft:10,
+    fontSize: 20,
     fontWeight: "600",
     color: "#333",
   },
