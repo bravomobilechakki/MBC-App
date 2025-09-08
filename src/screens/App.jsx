@@ -1,24 +1,38 @@
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 // Components
-import Profile from "../components/Profile";
-import Cart from "../components/Cart";
-import Search from "../components/Search";
-import Navbar from "../components/Navbar";
+import Profile from "../components/navbar/Profile";
+import Cart from "../components/navbar/Cart";
+import Search from "../components/navbar/Search";
+import Navbar from "../components/navbar/Navbar";
 import Dashboard from "../components/dashboard/Dashboard";
+import Footer from "../components/footer(Tab)/Footer";
 
 // Profile-related screens
-import Orders from "../components/Profiledetails.jsx/Orders";
-import Policy from "../components/Profiledetails.jsx/Policy";
-import Wishlist from "../components/Profiledetails.jsx/Wishlist";
-import Payment from "../components/Profiledetails.jsx/Payment";
-import Address from "../components/Profiledetails.jsx/Address";
-import Notifications from "../components/Profiledetails.jsx/Notifications";
-import Support from "../components/Profiledetails.jsx/Support";
+import Orders from "../components/profileDetails/Orders";
+import Policy from "../components/profileDetails/Policy";
+import Wishlist from "../components/profileDetails/Wishlist";
+import Payment from "../components/profileDetails/Payment";
+import Address from "../components/profileDetails/Address";
+import Notifications from "../components/profileDetails/Notifications";
+import Support from "../components/profileDetails/Support";
+import ProfilePage from "../components/profileDetails/profilePage";
 
+// Dummy placeholder screens
+const SearchScreen = () => (
+  <View style={styles.center}>
+    <Text>Search Screen</Text>
+  </View>
+);
+
+const SettingScreen = () => (
+  <View style={styles.center}>
+    <Text>Setting Screen</Text>
+  </View>
+);
 
 const Stack = createNativeStackNavigator();
 
@@ -30,6 +44,7 @@ const Home = () => {
         <Search />
         <Dashboard />
       </ScrollView>
+      <Footer />
     </View>
   );
 };
@@ -42,6 +57,8 @@ export default function App() {
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="Profile" component={Profile} />
         <Stack.Screen name="Cart" component={Cart} />
+        <Stack.Screen name="Search" component={SearchScreen} />
+        <Stack.Screen name="Setting" component={SettingScreen} />
 
         {/* Profile Details Screens */}
         <Stack.Screen name="Orders" component={Orders} />
@@ -51,9 +68,7 @@ export default function App() {
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="PrivacyPolicy" component={Policy} />
         <Stack.Screen name="Support" component={Support} />
-
-        {/* Auth */}
-        {/* <Stack.Screen name="Login" component={Login} /> */}
+        <Stack.Screen name="ProfilePage" component={ProfilePage} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -63,5 +78,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

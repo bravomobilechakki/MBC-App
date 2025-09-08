@@ -4,6 +4,6 @@
     "allowJs": true,
     "jsx": "react-native"
   },
-  "include": ["**/*.js", "**/*.jsx"],
+  "include": ["**/*.js", "**/*.jsx", "src/components/profileDetails"],
   "exclude": ["**/node_modules", "**/Pods"]
 }

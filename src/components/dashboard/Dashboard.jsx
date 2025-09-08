@@ -37,9 +37,9 @@ const Dashboard = () => {
 
       {/* Offer Banner */}
       <View style={styles.offerCard}>
-        <Text style={styles.offerTitle}>50–40% OFF</Text>
+        <Text style={styles.offerTitle}>10-20% OFF</Text>
         <Text style={styles.offerSub}>Now in (product)</Text>
-        <Text style={styles.offerSub}>All colours</Text>
+        <Text style={styles.offerSub}>Multi Grain Flour</Text>
         <TouchableOpacity style={styles.shopNowBtn}>
           <Text style={styles.shopNowText}>Shop Now →</Text>
         </TouchableOpacity>
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   categoryImage: { width: 60, height: 60, borderRadius: 30, backgroundColor: "#ddd" },
   categoryText: { marginTop: 5, fontSize: 12 },
   offerCard: {
-    backgroundColor: "#ac9e81ff",
+    backgroundColor: "#b8af9dff",
     borderRadius: 12,
     padding: 20,
     marginBottom: 15,
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   shopNowBtn: { marginTop: 10, borderWidth: 1, borderColor: "#fff", padding: 8, borderRadius: 8 },
   shopNowText: { color: "#fff", fontWeight: "bold" },
   dealCard: {
-    backgroundColor: "#4da6ff",
+    backgroundColor: "#e7a7a7ff",
     borderRadius: 12,
     padding: 20,
     flexDirection: "row",

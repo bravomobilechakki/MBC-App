@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import { View, StyleSheet, TouchableOpacity, Animated, Image } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import Ionicons from "react-native-vector-icons/Ionicons"; // ✅ keep vector icons for profile & menu
+import Ionicons from "react-native-vector-icons/Ionicons"; 
 
 const Navbar = () => {
   const menuAnimation = useRef(new Animated.Value(0)).current;
@@ -27,7 +27,7 @@ const Navbar = () => {
 <TouchableOpacity onPress={toggleMenu}>
   <Animated.View style={{ transform: [{ rotate: menuIconRotation }] }}>
     <Image
-      source={require("../images/menu.png")} // 👉 replace with your menu image
+      source={require("../../images/menu.png")} // 👉 replace with your menu image
       style={styles.menuIcon}
       resizeMode="contain"
     />
@@ -37,7 +37,7 @@ const Navbar = () => {
 
       {/* ✅ Logo Image */}
       <Image
-        source={require("../images/logo1.png")}
+        source={require("../../images/logo1.png")}
         style={styles.logo}
         resizeMode="contain"
       />
@@ -47,7 +47,7 @@ const Navbar = () => {
         {/* Custom cart image */}
         <TouchableOpacity onPress={() => navigation.navigate("Cart")}>
           <Image
-            source={require("../images/cart.png")}
+            source={require("../../images/cart.png")}
             style={styles.cartIcon}
             resizeMode="contain"
           />
@@ -56,7 +56,7 @@ const Navbar = () => {
         {/* Profile using Ionicon */}
            <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
           <Image
-            source={require("../images/user.png")}
+            source={require("../../images/user.png")}
             style={styles.cartIcon}
             resizeMode="contain"
           />
