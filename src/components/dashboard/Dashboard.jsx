@@ -1,12 +1,21 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
 import React from "react";
 
+// Categories Data
 const categories = [
   { id: 1, title: "Flour", image: require("../../images/flour.png") },
   { id: 2, title: "Grains", image: require("../../images/flour.png") },
   { id: 3, title: "Spices", image: require("../../images/flour.png") },
   { id: 4, title: "Oil", image: require("../../images/flour.png") },
   { id: 5, title: "Multi Grain Flour", image: require("../../images/flour.png") },
+];
+
+// Products Data
+const products = [
+  { id: 1, name: "Organic Wheat Flour", price: "5.99", image: require("../../images/flour.png") },
+  { id: 2, name: "Brown Rice", price: "3.49", image: require("../../images/flour.png") },
+  { id: 3, name: "Cumin Seeds", price: "2.99", image: require("../../images/flour.png") },
+  { id: 4, name: "Olive Oil", price: "8.99", image: require("../../images/flour.png") },
 ];
 
 const Dashboard = () => {
@@ -53,7 +62,21 @@ const Dashboard = () => {
         </View>
         <TouchableOpacity style={styles.viewAllBtn}>
           <Text style={styles.viewAllText}>View all →</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> 
+      </View>
+
+      {/* Products List */}
+      <View style={styles.productsSection}>
+        <Text style={styles.productsTitle}>Products</Text>
+        {products.map((product) => (
+          <View key={product.id} style={styles.productItem}>
+            <Image source={product.image} style={styles.productImage} />
+            <View style={styles.productDetails}>
+              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productPrice}>${product.price}</Text>
+            </View>
+          </View>
+        ))}
       </View>
     </ScrollView>
   );
@@ -62,12 +85,12 @@ const Dashboard = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 10 },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  headerText: { fontSize: 18, fontWeight: "bold" , marginTop:20, marginBottom:"15"},
+  headerText: { fontSize: 18, fontWeight: "bold", marginTop: 20, marginBottom: 15 },
   sortFilter: { flexDirection: "row" },
   sortBtn: { marginHorizontal: 5, padding: 6, backgroundColor: "#eee", borderRadius: 8 },
   filterBtn: { marginHorizontal: 5, padding: 6, backgroundColor: "#eee", borderRadius: 8 },
   categories: { marginVertical: 15 },
-  categoryItem: { alignItems: "center", marginRight: 15, marginBottom:25, marginTop:15 },
+  categoryItem: { alignItems: "center", marginRight: 15, marginBottom: 25, marginTop: 15 },
   categoryImage: { width: 60, height: 60, borderRadius: 30, backgroundColor: "#ddd" },
   categoryText: { marginTop: 5, fontSize: 12 },
   offerCard: {
@@ -92,6 +115,20 @@ const styles = StyleSheet.create({
   dealTimer: { fontSize: 14, color: "#fff", marginTop: 5 },
   viewAllBtn: { backgroundColor: "#fff", padding: 8, borderRadius: 8 },
   viewAllText: { color: "#4da6ff", fontWeight: "bold" },
+  productsSection: { marginTop: 20 },
+  productsTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 10 },
+  productItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+    padding: 10,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+  },
+  productImage: { width: 60, height: 60, borderRadius: 10, backgroundColor: "#ddd" },
+  productDetails: { marginLeft: 10 },
+  productName: { fontSize: 16, fontWeight: "bold" },
+  productPrice: { fontSize: 14, color: "#888", marginTop: 4 },
 });
 
 export default Dashboard;

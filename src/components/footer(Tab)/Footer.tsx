@@ -9,6 +9,7 @@ type RootStackParamList = {
   Cart: undefined;
   Search: undefined;
   Setting: undefined;
+  Booking: undefined; 
 };
 
 const Footer = () => {
@@ -22,7 +23,7 @@ const Footer = () => {
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tab} onPress={() => navigation.navigate('Wishlist')}>
-        <Ionicons name="heart-outline" size={24} color="#8b2828ff" />
+        <Ionicons name="heart-outline" size={24} color="#8b2828ff "/>
         <Text style={styles.label}>Wishlist</Text>
       </TouchableOpacity>
 
@@ -30,13 +31,13 @@ const Footer = () => {
         <Ionicons name="cart-outline" size={28} color="#fff" />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.tab} onPress={() => navigation.navigate('Search')}>
-        <Ionicons name="search-outline" size={24} color="#c03e3eff" />
-        <Text style={styles.label}>Search</Text>
+      <TouchableOpacity style={styles.tab} onPress={() => navigation.navigate('Booking')}>
+        <Ionicons name="car-sport-outline" size={24} color="#c03e3eff" />
+        <Text style={styles.label}>Booking</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tab} onPress={() => navigation.navigate('Setting')}>
-        <Ionicons name="settings-outline" size={24} color="#d8a720ff" />
+        <Ionicons name="settings-outline" size={24} color="#d82020ff" />
         <Text style={styles.label}>Setting</Text>
       </TouchableOpacity>
     </View>
@@ -71,6 +72,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 30, // makes it float above others
+    marginBottom: 30,
   },
 });

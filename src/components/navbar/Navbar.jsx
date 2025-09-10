@@ -45,9 +45,9 @@ const Navbar = () => {
       {/* ✅ Right Side Icons */}
       <View style={styles.iconsContainer}>
         {/* Custom cart image */}
-        <TouchableOpacity onPress={() => navigation.navigate("Cart")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Notifications")}>
           <Image
-            source={require("../../images/cart.png")}
+            source={require("../../images/notification.png")}
             style={styles.cartIcon}
             resizeMode="contain"
           />

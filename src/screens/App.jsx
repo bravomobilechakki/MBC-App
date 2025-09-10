@@ -20,6 +20,7 @@ import Address from "../components/profileDetails/Address";
 import Notifications from "../components/profileDetails/Notifications";
 import Support from "../components/profileDetails/Support";
 import ProfilePage from "../components/profileDetails/profilePage";
+import Booking from "../components/footer(Tab)/Booking";
 
 // Dummy placeholder screens
 const SearchScreen = () => (
@@ -69,6 +70,7 @@ export default function App() {
         <Stack.Screen name="PrivacyPolicy" component={Policy} />
         <Stack.Screen name="Support" component={Support} />
         <Stack.Screen name="ProfilePage" component={ProfilePage} />
+       <Stack.Screen name="Booking" component={Booking} />
       </Stack.Navigator>
     </NavigationContainer>
   );
