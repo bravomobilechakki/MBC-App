@@ -16,15 +16,17 @@ const Wishlist = () => {
   const [wishlist, setWishlist] = useState([
     {
       id: "2",
-      name: "fLOUR",
+      name: "Flour",
       price: "₹24,999",
-      image: "https://cdn.shopify.com/s/files/1/0517/5391/0426/files/Whole_Wheat_Flour_Benefits.png?v=1750243817",
+      image:
+        "https://cdn.shopify.com/s/files/1/0517/5391/0426/files/Whole_Wheat_Flour_Benefits.png?v=1750243817",
     },
     {
       id: "3",
       name: "Multi Grain",
       price: "₹2,499",
-      image: "https://cdn.shopify.com/s/files/1/0517/5391/0426/files/Whole_Wheat_Flour_Benefits.png?v=1750243817",
+      image:
+        "https://cdn.shopify.com/s/files/1/0517/5391/0426/files/Whole_Wheat_Flour_Benefits.png?v=1750243817",
     },
   ]);
 
@@ -32,33 +34,36 @@ const Wishlist = () => {
     setWishlist(wishlist.filter((item) => item.id !== id));
   };
 
+  const handleNavigate = (item) => {
+    navigation.navigate("ProductDetails", { item });
+  };
+
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.image} />
-
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.price}>{item.price}</Text>
-
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.cartBtn}>
-            <Ionicons name="cart-outline" size={18} color="#fff" />
-            <Text style={styles.cartText}>Add to Cart</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => handleRemove(item.id)}>
-            <Ionicons name="trash-outline" size={22} color="red" />
-          </TouchableOpacity>
+    <TouchableOpacity onPress={() => handleNavigate(item)}>
+      <View style={styles.card}>
+        <Image source={{ uri: item.image }} style={styles.image} />
+        <View style={styles.info}>
+          <Text style={styles.name}>{item.name}</Text>
+          <Text style={styles.price}>{item.price}</Text>
+          <View style={styles.actions}>
+            <TouchableOpacity style={styles.cartBtn}>
+              <Ionicons name="cart-outline" size={18} color="#fff" />
+              <Text style={styles.cartText}>Add to Cart</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleRemove(item.id)}>
+              <Ionicons name="trash-outline" size={22} color="red" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Header with Back Button */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Wishlist</Text>
@@ -91,13 +96,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
+  backButton: {
+    padding: 4,
+  },
   headerTitle: {
     flex: 1,
     fontSize: 20,
     fontWeight: "600",
-    marginLeft: 8,
     color: "#333",
     textAlign: "center",
+    marginRight: 24, // Align center even with back button
   },
   card: {
     flexDirection: "row",

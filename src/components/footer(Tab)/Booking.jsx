@@ -22,16 +22,16 @@ const VenueBooking = () => {
     <View style={styles.container}>
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={24} color="#200b0bff" />
+        <Ionicons name="arrow-back" size={24} color="#200b0bff"/>
   
       </TouchableOpacity>
 
       <Text style={styles.title}>Venue Booking</Text>
 
-      <Text style={styles.label}>Name</Text>
+      <Text style={styles.label}>Name</Text>no
       <TextInput
         style={styles.input}
-        placeholder="Enter your name"
+        placeholder="Enter your name"      
         value={name}
         onChangeText={setName}
       />
@@ -70,6 +70,9 @@ const VenueBooking = () => {
     </View>
   );
 };
+
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -149,3 +152,29 @@ const styles = StyleSheet.create({
 });
 
 export default VenueBooking;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

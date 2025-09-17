@@ -15,7 +15,7 @@ const Profile = () => {
   const navigation = useNavigation();
 
   const goToProfile = () => {
-    navigation.navigate("ProfilePage");
+    navigation.navigate("Login");
   };
 
   return (
@@ -24,7 +24,7 @@ const Profile = () => {
         {/* ✅ Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.navigate("Home")}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Ionicons name="arrow-back" size={24} color="#333"/>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
           <View style={{ width: 24 }} /> {/* Spacer */}

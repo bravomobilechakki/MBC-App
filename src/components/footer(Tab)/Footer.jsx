@@ -1,19 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
-
-type RootStackParamList = {
-  Home: undefined;
-  Wishlist: undefined;
-  Cart: undefined;
-  Search: undefined;
-  Setting: undefined;
-  Booking: undefined; 
-};
+import { useNavigation } from '@react-navigation/native';
 
 const Footer = () => {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const navigation = useNavigation();
 
   return (
     <View style={styles.footer}>
@@ -23,7 +14,7 @@ const Footer = () => {
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.tab} onPress={() => navigation.navigate('Wishlist')}>
-        <Ionicons name="heart-outline" size={24} color="#8b2828ff "/>
+        <Ionicons name="heart-outline" size={24} color="#d82020ff" />
         <Text style={styles.label}>Wishlist</Text>
       </TouchableOpacity>
 
@@ -36,9 +27,9 @@ const Footer = () => {
         <Text style={styles.label}>Booking</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.tab} onPress={() => navigation.navigate('Setting')}>
-        <Ionicons name="settings-outline" size={24} color="#d82020ff" />
-        <Text style={styles.label}>Setting</Text>
+      <TouchableOpacity style={styles.tab} onPress={() => navigation.navigate('Product')}>
+        <Ionicons name="grid-outline" size={24} color="#d82020ff" />
+        <Text style={styles.label}>Product</Text>
       </TouchableOpacity>
     </View>
   );
@@ -75,3 +66,10 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
 });
+
+
+
+
+
+
+

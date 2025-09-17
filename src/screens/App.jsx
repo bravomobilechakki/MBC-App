@@ -19,8 +19,11 @@ import Payment from "../components/profileDetails/Payment";
 import Address from "../components/profileDetails/Address";
 import Notifications from "../components/profileDetails/Notifications";
 import Support from "../components/profileDetails/Support";
-import ProfilePage from "../components/profileDetails/profilePage";
+import Login from "../components/Login/login";
+import SignUp from "../components/Login/signup";
 import Booking from "../components/footer(Tab)/Booking";
+import ProductDetails from "../components/product/productDetails";
+import Product from "../components/product/product";
 
 // Dummy placeholder screens
 const SearchScreen = () => (
@@ -69,8 +72,12 @@ export default function App() {
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="PrivacyPolicy" component={Policy} />
         <Stack.Screen name="Support" component={Support} />
-        <Stack.Screen name="ProfilePage" component={ProfilePage} />
+  <Stack.Screen name="Login" component={Login} />
+    <Stack.Screen name="SignUp" component={SignUp} />
        <Stack.Screen name="Booking" component={Booking} />
+        <Stack.Screen name="ProductDetails" component={ProductDetails} />
+         <Stack.Screen name="Product" component={Product} />
+        
       </Stack.Navigator>
     </NavigationContainer>
   );

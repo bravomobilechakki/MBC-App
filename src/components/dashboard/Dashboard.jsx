@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
 import React from "react";
+import { useNavigation } from "@react-navigation/native";
 
 // Categories Data
 const categories = [
@@ -19,6 +20,12 @@ const products = [
 ];
 
 const Dashboard = () => {
+  const navigation = useNavigation();
+
+  const handleProductPress = (product) => {
+    navigation.navigate("ProductDetails", { product });
+  };
+
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -69,18 +76,20 @@ const Dashboard = () => {
       <View style={styles.productsSection}>
         <Text style={styles.productsTitle}>Products</Text>
         {products.map((product) => (
-          <View key={product.id} style={styles.productItem}>
+          <TouchableOpacity key={product.id} style={styles.productItem} onPress={() => handleProductPress(product)}>
             <Image source={product.image} style={styles.productImage} />
             <View style={styles.productDetails}>
               <Text style={styles.productName}>{product.name}</Text>
               <Text style={styles.productPrice}>${product.price}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </ScrollView>
   );
 };
+
+export default Dashboard;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 10 },
@@ -130,5 +139,3 @@ const styles = StyleSheet.create({
   productName: { fontSize: 16, fontWeight: "bold" },
   productPrice: { fontSize: 14, color: "#888", marginTop: 4 },
 });
-
-export default Dashboard;
