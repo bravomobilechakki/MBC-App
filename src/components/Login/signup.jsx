@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,10 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SummaryApi from '../../common';
+import { UserContext } from '../../context/UserContext';
 
 const SignUp = ({ navigation }) => {
+  const { setUser, setToken } = useContext(UserContext);
   const [mobile, setMobile] = useState('');
   const [name, setName] = useState('');
   const [street, setStreet] = useState('');
@@ -44,17 +46,7 @@ const SignUp = ({ navigation }) => {
         }),
       });
 
-      const contentType = response.headers.get("content-type");
-      let errorDetails = await response.text();
-      if (contentType && contentType.includes("application/json")) {
-        errorDetails = JSON.parse(errorDetails);
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorDetails)}`);
-      }
-
-      const result = contentType.includes("application/json") ? errorDetails : JSON.parse(errorDetails);
+      const result = await response.json();
       if (result.success) {
         Alert.alert('Success', 'OTP sent to your mobile.');
         setShowOTP(true);
@@ -62,7 +54,7 @@ const SignUp = ({ navigation }) => {
         Alert.alert('Error', result.message || 'Failed to send OTP.');
       }
     } catch (error) {
-      Alert.alert('Error', error.message || 'Something went wrong.');
+      Alert.alert('Error', 'Something went wrong.');
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -112,25 +104,18 @@ const SignUp = ({ navigation }) => {
         }),
       });
 
-      const contentType = response.headers.get("content-type");
-      let errorDetails = await response.text();
-      if (contentType && contentType.includes("application/json")) {
-        errorDetails = JSON.parse(errorDetails);
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}, details: ${JSON.stringify(errorDetails)}`);
-      }
-
-      const result = contentType.includes("application/json") ? errorDetails : JSON.parse(errorDetails);
+      const result = await response.json();
       if (result.success) {
+        setToken(result.data.token);
+        setUser(result.data.user);
         Alert.alert('Success', 'Account created successfully!');
         setIsVerified(true);
+        navigation.navigate('Profile');
       } else {
         Alert.alert('Error', result.message || 'OTP verification failed.');
       }
     } catch (error) {
-      Alert.alert('Error', error.message || 'Something went wrong.');
+      Alert.alert('Error', 'Something went wrong.');
       console.error(error);
     } finally {
       setIsLoading(false);

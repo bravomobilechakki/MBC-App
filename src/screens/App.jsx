@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { UserProvider } from "../context/UserContext";
 
 // Components
 import Profile from "../components/navbar/Profile";
@@ -55,31 +56,32 @@ const Home = () => {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {/* Main Screens */}
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="Profile" component={Profile} />
-        <Stack.Screen name="Cart" component={Cart} />
-        <Stack.Screen name="Search" component={SearchScreen} />
-        <Stack.Screen name="Setting" component={SettingScreen} />
+    <UserProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {/* Main Screens */}
+          <Stack.Screen name="Home" component={Home} />
+          <Stack.Screen name="Profile" component={Profile} />
+          <Stack.Screen name="Cart" component={Cart} />
+          <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Screen name="Setting" component={SettingScreen} />
 
-        {/* Profile Details Screens */}
-        <Stack.Screen name="Orders" component={Orders} />
-        <Stack.Screen name="Wishlist" component={Wishlist} />
-        <Stack.Screen name="Payment" component={Payment} />
-        <Stack.Screen name="Address" component={Address} />
-        <Stack.Screen name="Notifications" component={Notifications} />
-        <Stack.Screen name="PrivacyPolicy" component={Policy} />
-        <Stack.Screen name="Support" component={Support} />
-  <Stack.Screen name="Login" component={Login} />
-    <Stack.Screen name="SignUp" component={SignUp} />
-       <Stack.Screen name="Booking" component={Booking} />
-        <Stack.Screen name="ProductDetails" component={ProductDetails} />
-         <Stack.Screen name="Product" component={Product} />
-        
-      </Stack.Navigator>
-    </NavigationContainer>
+          {/* Profile Details Screens */}
+          <Stack.Screen name="Orders" component={Orders} />
+          <Stack.Screen name="Wishlist" component={Wishlist} />
+          <Stack.Screen name="Payment" component={Payment} />
+          <Stack.Screen name="Address" component={Address} />
+          <Stack.Screen name="Notifications" component={Notifications} />
+          <Stack.Screen name="PrivacyPolicy" component={Policy} />
+          <Stack.Screen name="Support" component={Support} />
+          <Stack.Screen name="Login" component={Login} />
+          <Stack.Screen name="SignUp" component={SignUp} />
+          <Stack.Screen name="Booking" component={Booking} />
+          <Stack.Screen name="ProductDetails" component={ProductDetails} />
+          <Stack.Screen name="Product" component={Product} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </UserProvider>
   );
 }
 

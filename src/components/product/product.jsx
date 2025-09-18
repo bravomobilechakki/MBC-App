@@ -32,7 +32,7 @@ const ProductDetails = () => {
       description:
         'Enjoy high-fidelity sound with the Wireless Headphones ABC.',
       price: '₹7,499',
-      rating: 4.2,
+      rating: 4.2, 
       image: require('../../images/flour.png'),
     },
     {

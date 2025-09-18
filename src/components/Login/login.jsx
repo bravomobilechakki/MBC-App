@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,11 @@ import {
   Alert,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import SummaryApi  from '../../common';
+import SummaryApi from '../../common';
+import { UserContext } from '../../context/UserContext';
 
-const Login = ({ navigation }) => {3
+const Login = ({ navigation }) => {
+  const { setUser, setToken } = useContext(UserContext);
   const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [stage, setStage] = useState('phone'); // 'phone' or 'otp'
@@ -25,9 +27,6 @@ const Login = ({ navigation }) => {3
     }
     setIsLoading(true);
     try {
-      console.log('Sending OTP request to:', SummaryApi.logIn.url);
-      console.log('Request body:', { mobile });
-
       const response = await fetch(SummaryApi.logIn.url, {
         method: SummaryApi.logIn.method.toUpperCase(),
         headers: {
@@ -37,10 +36,6 @@ const Login = ({ navigation }) => {3
           mobile: mobile,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
 
       const result = await response.json();
       setIsLoading(false);
@@ -53,7 +48,7 @@ const Login = ({ navigation }) => {3
       }
     } catch (error) {
       setIsLoading(false);
-      Alert.alert('Error', error.message || 'Something went wrong');
+      Alert.alert('Error', 'Something went wrong');
       console.error(error);
     }
   };
@@ -65,9 +60,6 @@ const Login = ({ navigation }) => {3
     }
     setIsLoading(true);
     try {
-      console.log('Verifying OTP request to:', SummaryApi.verifyOTP.url);
-      console.log('Request body:', { mobile, otp });
-
       const response = await fetch(SummaryApi.verifyOTP.url, {
         method: SummaryApi.verifyOTP.method.toUpperCase(),
         headers: {
@@ -79,24 +71,20 @@ const Login = ({ navigation }) => {3
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
       const result = await response.json();
       setIsLoading(false);
 
       if (result.success) {
+        setToken(result.data.token);
+        setUser(result.data.user);
         Alert.alert('Success', result.message);
-        console.log('User data:', result.data.user);
-        console.log('Token:', result.data.token);
-        // Handle navigation or token storage here if needed
+        navigation.navigate('Profile');
       } else {
         Alert.alert('Error', result.message || 'Invalid OTP');
       }
     } catch (error) {
       setIsLoading(false);
-      Alert.alert('Error', error.message || 'Something went wrong');
+      Alert.alert('Error', 'Something went wrong');
       console.error(error);
     }
   };
@@ -195,6 +183,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    text :"black",
     height: 50,
     fontSize: 16,
   },
