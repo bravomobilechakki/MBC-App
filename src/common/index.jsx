@@ -1,4 +1,4 @@
-const backendDomain = "https://d2e562813d18.ngrok-free.app";
+const backendDomain = "https://1f730cc6d648.ngrok-free.app";
 // const backendDomain = "https://e-com-backend-544302972243.asia-southeast1.run.app";
 
 const SummaryApi = {
@@ -13,6 +13,10 @@ const SummaryApi = {
   verifyOTP: {
     url: `${backendDomain}/api/VerifyOTP`,
     method: "post",
+  },
+  getProducts: {
+    url: `${backendDomain}/api/products`,
+    method: "get",
   },
 };
 

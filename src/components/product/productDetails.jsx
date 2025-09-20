@@ -1,16 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useRoute } from '@react-navigation/native';
 
-const Product = () => {
+const ProductDetails = () => {
+  const route = useRoute();
+  const { product } = route.params;
   const [quantity, setQuantity] = useState(1);
-
-  const product = {
-    name: 'Organic Wheat Flour',
-    description: 'Premium quality organic wheat flour perfect for baking and cooking.',
-    price: '₹249',
-    image: require("../../images/flour.png"), // Replace with your local image 
-  };
 
   const increaseQuantity = () => setQuantity(quantity + 1);
   const decreaseQuantity = () => {
@@ -19,10 +15,10 @@ const Product = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Image source={product.image} style={styles.image}/>
+      <Image source={{ uri: product.images[0] }} style={styles.image}/>
       <View style={styles.infoContainer}>
         <Text style={styles.name}>{product.name}</Text>
-        <Text style={styles.price}>{product.price}</Text>
+        <Text style={styles.price}>{`₹${product.sellingPrice}`}</Text>
         <Text style={styles.description}>{product.description}</Text>
 
         {/* Quantity Selector */}
@@ -54,7 +50,7 @@ const Product = () => {
   );
 };
 
-export default Product;
+export default ProductDetails;
 
 const styles = StyleSheet.create({
   container: {
@@ -136,4 +132,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
- 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,71 +7,46 @@ import {
   FlatList,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 }
 from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import SummaryApi from '../../common';
 
-const ProductDetails = () => {
+const Product = () => {
   const navigation = useNavigation();
   const [quantities, setQuantities] = useState({});
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const products = [
-    {
-      id: '1', 
-      name: 'Smartphone XYZ Pro',
-      description:
-        'Experience the next level of performance with the Smartphone XYZ Pro.',
-      price: '₹49,999',
-      rating: 4.5,
-      image: require('../../images/flour.png'),
-    },
-    {
-      id: '2',
-      name: 'Wireless Headphones ABC',
-      description:
-        'Enjoy high-fidelity sound with the Wireless Headphones ABC.',
-      price: '₹7,499',
-      rating: 4.2, 
-      image: require('../../images/flour.png'),
-    },
-    {
-      id: '3',
-      name: 'Smartwatch DEF',
-      description:
-        'Track your fitness and stay connected with the Smartwatch DEF.',
-      price: '₹9,999',
-      rating: 4.7,
-      image: require('../../images/flour.png'),
-    },
-    {
-      id: '4',
-      name: 'Tablet GHI',
-      description:
-        'A versatile tablet for work and entertainment with vibrant display.',
-      price: '₹15,999',
-      rating: 4.3,
-      image: require('../../images/flour.png'),
-    },
-    {
-      id: '5',
-      name: 'Speaker JKL',
-      description:
-        'Portable speaker with rich sound and deep bass for any occasion.',
-      price: '₹3,499',
-      rating: 4.1,
-      image: require('../../images/flour.png'),
-    },
-    {
-      id: '6',
-      name: 'Camera MNO',
-      description:
-        'Capture your best moments with high-resolution and optical zoom.',
-      price: '₹22,499',
-      rating: 4.6,
-      image: require('../../images/flour.png'),
-    },
-  ];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(SummaryApi.getProducts.url, {
+          method: SummaryApi.getProducts.method.toUpperCase(),
+        });
+        const result = await response.json();
+        if (result.success) {
+          setProducts(result.data.products);
+        } else {
+          setError(result.message || 'Failed to fetch products');
+        }
+      } catch (error) {
+        setError('Something went wrong');
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const handleProductPress = (product) => {
+    navigation.navigate('ProductDetails', { product });
+  };
 
   const increaseQuantity = (id) => {
     setQuantities((prev) => ({
@@ -96,40 +71,50 @@ const ProductDetails = () => {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.productCard}>
-      <Image source={item.image} style={styles.image} />
-      <Text style={styles.name}>{item.name}</Text>
-      <View style={styles.ratingContainer}>
-        <Ionicons name="star" size={16} color="#FFD700" />
-        <Text style={styles.ratingText}>{item.rating}</Text>
+    <TouchableOpacity onPress={() => handleProductPress(item)}>
+      <View style={styles.productCard}>
+        <Image source={{ uri: item.images[0] }} style={styles.image} />
+        <Text style={styles.name}>{item.name}</Text>
+        <View style={styles.ratingContainer}>
+          <Ionicons name="star" size={16} color="#FFD700" />
+          <Text style={styles.ratingText}>{item.rating || 'N/A'}</Text>
+        </View>
+        <Text style={styles.price}>{`₹${item.sellingPrice}`}</Text>
+        <View style={styles.quantityContainer}>
+          <TouchableOpacity onPress={() => decreaseQuantity(item._id)} style={styles.qtyBtn}>
+            <Ionicons name="remove" size={20} color="#333" />
+          </TouchableOpacity>
+          <Text style={styles.quantityText}>{quantities[item._id] || 1}</Text>
+          <TouchableOpacity onPress={() => increaseQuantity(item._id)} style={styles.qtyBtn}>
+            <Ionicons name="add" size={20} color="#333" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity style={styles.cartBtn} onPress={() => handleAddToCart(item)}>
+            <Ionicons name="cart-outline" size={20} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.buyBtn} onPress={() => handleBuyNow(item)}>
+            <Text style={styles.buyBtnText}>Buy</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <Text style={styles.price}>{item.price}</Text>
-      <View style={styles.quantityContainer}>
-        <TouchableOpacity onPress={() => decreaseQuantity(item.id)} style={styles.qtyBtn}>
-          <Ionicons name="remove" size={20} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.quantityText}>{quantities[item.id] || 1}</Text>
-        <TouchableOpacity onPress={() => increaseQuantity(item.id)} style={styles.qtyBtn}>
-          <Ionicons name="add" size={20} color="#333" />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity style={styles.cartBtn} onPress={() => handleAddToCart(item)}>
-          <Ionicons name="cart-outline" size={20} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.buyBtn} onPress={() => handleBuyNow(item)}>
-          <Text style={styles.buyBtnText}>Buy</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    </TouchableOpacity>
   );
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
+
+  if (error) {
+    return <Text>{error}</Text>;
+  }
 
   return (
     <View style={styles.container}>
       <FlatList
         data={products}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContainer}
         numColumns={2} // Display 2 products per row
         columnWrapperStyle={styles.row}
@@ -189,7 +174,6 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
   },
   qtyBtn: {
     padding: 6,
@@ -225,4 +209,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProductDetails;
+export default Product;
