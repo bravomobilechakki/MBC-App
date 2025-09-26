@@ -12,6 +12,7 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SummaryApi from '../../common';
 import { UserContext } from '../../context/UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Login = ({ navigation }) => {
   const { setUser, setToken } = useContext(UserContext);
@@ -30,7 +31,7 @@ const Login = ({ navigation }) => {
       const response = await fetch(SummaryApi.logIn.url, {
         method: SummaryApi.logIn.method.toUpperCase(),
         headers: {
-          'Content-Type': 'application/json', 
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           mobile: mobile,
@@ -77,6 +78,8 @@ const Login = ({ navigation }) => {
       if (result.success) {
         setToken(result.data.token);
         setUser(result.data.user);
+        await AsyncStorage.setItem('token', result.data.token);
+        await AsyncStorage.setItem('user', JSON.stringify(result.data.user));
         Alert.alert('Success', result.message);
         navigation.navigate('Profile');
       } else {
@@ -109,7 +112,7 @@ const Login = ({ navigation }) => {
           <TouchableOpacity style={styles.button} onPress={handleSendOtp} disabled={isLoading}>
             <Text style={styles.buttonText}>{isLoading ? 'Sending...' : 'Send OTP'}</Text>
           </TouchableOpacity>
-mn          </>
+        </>
       ) : (
         <>
           <View style={styles.inputContainer}>
@@ -139,7 +142,7 @@ mn          </>
         <TouchableOpacity style={styles.socialButton}>
           <Image source={require('../../images/apple-logo.png')} style={styles.socialIcon} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.socialButton}> 
+        <TouchableOpacity style={styles.socialButton}>
           <Image source={require('../../images/facebook.png')} style={styles.socialIcon} />
         </TouchableOpacity>
       </View>

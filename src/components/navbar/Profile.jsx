@@ -11,14 +11,17 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../../context/UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Profile = () => {
   const navigation = useNavigation();
   const { user, setUser, setToken } = useContext(UserContext);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setUser(null);
     setToken(null);
+    await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('user');
     navigation.replace('Login');
   };
 
