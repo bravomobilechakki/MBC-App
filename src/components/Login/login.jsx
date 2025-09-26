@@ -30,7 +30,7 @@ const Login = ({ navigation }) => {
       const response = await fetch(SummaryApi.logIn.url, {
         method: SummaryApi.logIn.method.toUpperCase(),
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json', 
         },
         body: JSON.stringify({
           mobile: mobile,

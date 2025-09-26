@@ -1,30 +1,37 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from "react-native";
-import React from "react";
-import { useNavigation } from "@react-navigation/native";
-
-// Categories Data
-const categories = [
-  { id: 1, title: "Flour", image: require("../../images/flour.png") },
-  { id: 2, title: "Grains", image: require("../../images/flour.png") },
-  { id: 3, title: "Spices", image: require("../../images/flour.png") },
-  { id: 4, title: "Oil", image: require("../../images/flour.png") },
-  { id: 5, title: "Multi Grain Flour", image: require("../../images/flour.png") },
-];
-
-// Products Data
-const products = [
-  { id: 1, name: "Organic Wheat Flour", price: "5.99", image: require("../../images/flour.png") },
-  { id: 2, name: "Brown Rice", price: "3.49", image: require("../../images/flour.png") },
-  { id: 3, name: "Cumin Seeds", price: "2.99", image: require("../../images/flour.png") },
-  { id: 4, name: "Olive Oil", price: "8.99", image: require("../../images/flour.png") },
-];
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from "react-native";
+import React, { useEffect, useState } from "react";
+import SummaryApi from "../../common";
 
 const Dashboard = () => {
-  const navigation = useNavigation();
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
-  const handleProductPress = (product) => {
-    navigation.navigate("ProductDetails", { product });
-  };
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(SummaryApi.getCategorys.url, {
+          method: SummaryApi.getCategorys.method,
+          headers: { "Content-Type": "application/json" },
+        });
+        // console.log(response,"iuuyhjk");
+
+        if (!response.ok) throw new Error("Failed to fetch categories");
+
+        const data = await response.json();
+        console.log("Categories API Response:", data);
+
+        if (data.success && Array.isArray(data.data)) {
+          setCategories(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   return (
     <ScrollView style={styles.container}>
@@ -40,15 +47,24 @@ const Dashboard = () => {
           </TouchableOpacity>
         </View>
       </View>
-
++ 
       {/* Categories */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categories}>
-        {categories.map((cat) => (
-          <View key={cat.id} style={styles.categoryItem}>
-            <Image source={cat.image} style={styles.categoryImage} />
-            <Text style={styles.categoryText}>{cat.title}</Text>
-          </View>
-        ))}
+        {loadingCategories ? (
+          <ActivityIndicator size="small" color="#007bff" />
+        ) : categories.length > 0 ? (
+          categories.map((cat) => (
+            <View key={cat._id} style={styles.categoryItem}>
+              <Image
+                source={require("../../images/flour.png")} // 👈 replace with cat.image if API provides image
+                style={styles.categoryImage}
+              />
+              <Text style={styles.categoryText}>{cat.title || cat.name}</Text>
+            </View>
+          ))
+        ) : (
+          <Text style={{ color: "#888" }}>No categories found</Text>
+        )}
       </ScrollView>
 
       {/* Offer Banner */}
@@ -69,21 +85,7 @@ const Dashboard = () => {
         </View>
         <TouchableOpacity style={styles.viewAllBtn}>
           <Text style={styles.viewAllText}>View all →</Text>
-        </TouchableOpacity> 
-      </View>
-
-      {/* Products List */}
-      <View style={styles.productsSection}>
-        <Text style={styles.productsTitle}>Products</Text>
-        {products.map((product) => (
-          <TouchableOpacity key={product.id} style={styles.productItem} onPress={() => handleProductPress(product)}>
-            <Image source={product.image} style={styles.productImage} />
-            <View style={styles.productDetails}>
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productPrice}>${product.price}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -124,18 +126,4 @@ const styles = StyleSheet.create({
   dealTimer: { fontSize: 14, color: "#fff", marginTop: 5 },
   viewAllBtn: { backgroundColor: "#fff", padding: 8, borderRadius: 8 },
   viewAllText: { color: "#4da6ff", fontWeight: "bold" },
-  productsSection: { marginTop: 20 },
-  productsTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 10 },
-  productItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
-    padding: 10,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
-  },
-  productImage: { width: 60, height: 60, borderRadius: 10, backgroundColor: "#ddd" },
-  productDetails: { marginLeft: 10 },
-  productName: { fontSize: 16, fontWeight: "bold" },
-  productPrice: { fontSize: 14, color: "#888", marginTop: 4 },
 });

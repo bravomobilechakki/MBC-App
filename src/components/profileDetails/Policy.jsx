@@ -1,4 +1,5 @@
 import React from "react";
+
 import {
   View,
   Text,
@@ -43,13 +44,13 @@ const Policy = () => {
           • To improve our app experience
         </Text>
 
-        <Text style={styles.sectionTitle}>4. Data Security</Text>
+        <Text style={styles.sectionTitle}>4.Data Security</Text>
         <Text style={styles.text}>
           We use industry-standard security measures to protect your personal
           information. However, no system is 100% secure.
         </Text>
 
-        <Text style={styles.sectionTitle}>5. Your Rights</Text>
+ <Text style={styles.sectionTitle}>5. Your Rights</Text>
         <Text style={styles.text}>
           You may request access, updates, or deletion of your personal data at
           any time by contacting our support team.
@@ -60,6 +61,8 @@ const Policy = () => {
           We may update this policy from time to time. Please check this page
           regularly for updates.
         </Text>
+
+
 
         <Text style={styles.sectionTitle}>7. Contact Us</Text>
         <Text style={styles.text}>
@@ -79,6 +82,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 12,
+    includeFontPadding:8,
+
   },
   header: {
     fontSize: 20,
@@ -92,7 +97,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#333",
     marginTop: 16,
-    marginBottom: 6,
+    marginBottom: 6,   
   },
-  text: { fontSize: 14, color: "#555", lineHeight: 20 },
+  text: {
+     fontSize: 14,
+     color: "#555", 
+     lineHeight: 20 ,
+    
+    },
 });

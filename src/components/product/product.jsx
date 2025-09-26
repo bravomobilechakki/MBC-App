@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,16 @@ import {
   TouchableOpacity,
   Dimensions,
   ActivityIndicator,
-}
-from 'react-native';
+  Alert,
+} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import SummaryApi from '../../common';
+import { UserContext } from '../../context/UserContext';
 
 const Product = () => {
   const navigation = useNavigation();
+  const { token } = useContext(UserContext);
   const [quantities, setQuantities] = useState({});
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,8 +64,36 @@ const Product = () => {
     }));
   };
 
-  const handleAddToCart = (product) => {
-    console.log('Add to Cart:', product.name);
+  const handleAddToCart = async (product) => {
+    if (!token) {
+      Alert.alert('Error', 'Please login to add items to your cart.');
+      return;
+    }
+
+    try {
+      const response = await fetch(SummaryApi.addToCart.url, {
+        method: SummaryApi.addToCart.method.toUpperCase(),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          productId: product._id,
+          quantity: quantities[product._id] || 1,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        Alert.alert('Success', 'Product added to cart successfully!');
+      } else {
+        Alert.alert('Error', result.message || 'Failed to add product to cart.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong.');
+      console.error(error);
+    }
   };
 
   const handleBuyNow = (product) => {

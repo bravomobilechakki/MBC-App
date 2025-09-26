@@ -48,6 +48,7 @@ const Home = () => {
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
         <Search />
         <Dashboard />
+        <Product />
       </ScrollView>
       <Footer />
     </View>
