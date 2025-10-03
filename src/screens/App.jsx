@@ -26,6 +26,7 @@ import SignUp from "../components/Login/signup";
 import Booking from "../components/footer(Tab)/Booking";
 import ProductDetails from "../components/product/productDetails";
 import Product from "../components/product/product";
+import Review from "../components/product/review";
 
 // Dummy placeholder screens
 const SearchScreen = () => (
@@ -58,7 +59,7 @@ const Home = () => {
 
 const AppNavigator = () => {
   const { user, setUser, setToken } = useContext(UserContext);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); 
 
   useEffect(() => {
     const loadUserFromStorage = async () => {
@@ -111,6 +112,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Booking" component={Booking} />
       <Stack.Screen name="ProductDetails" component={ProductDetails} />
       <Stack.Screen name="Product" component={Product} />
+         <Stack.Screen name="Review" component={Review} />
     </Stack.Navigator>
   );
 };

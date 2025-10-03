@@ -1,9 +1,12 @@
- import React, { useState, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, FlatList, Dimensions, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { UserContext } from '../../context/UserContext';
 import SummaryApi from '../../common';
+
+// ✅ Import Review Component
+import Review from './review';
 
 const { width } = Dimensions.get('window');
 
@@ -117,6 +120,11 @@ const ProductDetails = () => {
             <Text style={styles.buyBtnText}>Buy Now</Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      {/* ✅ Review Section */}
+      <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
+        <Review />
       </View>
     </ScrollView>
   );

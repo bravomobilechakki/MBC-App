@@ -1,5 +1,5 @@
-const backendDomain = "http://192.168.1.18:5000";
-// const backendDomain = "https://e-com-backend-544302972243.asia-southeast1.run.app";
+// const backendDomain = "http://192.168.1.18:5000";
+const backendDomain = "https://mbc-backend-16697290.asia-south2.run.app";
 
 const SummaryApi = {
   signUP: { url: `${backendDomain}/api/signup`, method: "post" },
