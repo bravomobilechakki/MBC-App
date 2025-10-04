@@ -12,8 +12,10 @@ import { useNavigation } from "@react-navigation/native";
 
 const Address = () => {
   const navigation = useNavigation();
-  const [mode, setMode] = useState("list"); // "list" | "add" | "edit"
+  const [mode, setMode] = useState("list");
   const [selected, setSelected] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+
   const [addresses, setAddresses] = useState([
     {
       id: 1,
@@ -26,18 +28,6 @@ const Address = () => {
       city: "New Delhi",
       pincode: "110001",
       state: "Delhi",
-    },
-    {
-      id: 2,
-      label: "Work",
-      name: "John Doe",
-      phone: "+91 9123456780",
-      house: "45",
-      street: "Tech Park",
-      landmark: "Opp. Infosys",
-      city: "Bengaluru",
-      pincode: "560001",
-      state: "Karnataka",
     },
   ]);
 
@@ -54,9 +44,7 @@ const Address = () => {
     state: "",
   });
 
-  const handleChange = (key, value) => {
-    setForm({ ...form, [key]: value });
-  };
+  const handleChange = (key, value) => setForm({ ...form, [key]: value });
 
   const handleSave = () => {
     const finalLabel =
@@ -77,21 +65,12 @@ const Address = () => {
       );
     }
 
-    // Reset
-    setForm({
-      label: "",
-      customLabel: "",
-      name: "",
-      phone: "",
-      house: "",
-      street: "",
-      landmark: "",
-      city: "",
-      pincode: "",
-      state: "",
-    });
-    setSelected(null);
-    setMode("list");
+    // ✅ Show success and go back to list
+    setShowSuccess(true);
+    setTimeout(() => {
+      setShowSuccess(false);
+      setMode("list");
+    }, 1500);
   };
 
   const handleEdit = (addr) => {
@@ -104,11 +83,10 @@ const Address = () => {
     setAddresses(addresses.filter((addr) => addr.id !== id));
   };
 
-  // --- List Screen ---
+  // --- LIST SCREEN ---
   if (mode === "list") {
     return (
       <View style={styles.container}>
-        {/* ✅ Header with Back Icon */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color="#333" />
@@ -116,7 +94,7 @@ const Address = () => {
           <Text style={styles.headerTitle}>My Addresses</Text>
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
           {addresses.map((item) => (
             <View key={item.id} style={styles.card}>
               <View style={styles.row}>
@@ -173,17 +151,24 @@ const Address = () => {
             <Text style={styles.addText}>Add New Address</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        {/* ✅ Proceed to Payment Button */}
+        <TouchableOpacity
+          style={styles.paymentBtn}
+          onPress={() => navigation.navigate("Payment")}
+        >
+          <Text style={styles.paymentText}>Proceed to Payment</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  // --- Add/Edit Form ---
+  // --- ADD / EDIT FORM ---
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={{ paddingBottom: 20 }}
     >
-      {/* ✅ Back Icon in Add/Edit Screen */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => setMode("list")}>
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -193,7 +178,6 @@ const Address = () => {
         </Text>
       </View>
 
-      {/* Address Label */}
       <Text style={styles.sectionTitle}>Address Label</Text>
       <View style={styles.labelRow}>
         {["Home", "Work", "Other"].map((lbl) => (
@@ -217,69 +201,58 @@ const Address = () => {
         ))}
       </View>
 
-      {/* If Other selected → show input */}
       {form.label === "Other" && (
         <TextInput
-          placeholder="Enter Custom Label (e.g., Parents House)"
+          placeholder="Enter Custom Label"
           style={styles.input}
-          placeholderTextColor="#5c5b5bff"
           value={form.customLabel}
           onChangeText={(val) => handleChange("customLabel", val)}
         />
       )}
 
-      {/* Contact Info */}
       <Text style={styles.sectionTitle}>Contact Info</Text>
       <TextInput
         placeholder="Full Name"
         style={styles.input}
-        placeholderTextColor="#5c5b5bff"
         value={form.name}
         onChangeText={(val) => handleChange("name", val)}
       />
       <TextInput
         placeholder="Phone Number"
         style={styles.input}
-        placeholderTextColor="#5c5b5bff"
         keyboardType="phone-pad"
         value={form.phone}
         onChangeText={(val) => handleChange("phone", val)}
       />
 
-      {/* Address Info */}
       <Text style={styles.sectionTitle}>Address Info</Text>
       <TextInput
         placeholder="House / Flat / Building No."
         style={styles.input}
-        placeholderTextColor="#5c5b5bff"
         value={form.house}
         onChangeText={(val) => handleChange("house", val)}
       />
       <TextInput
         placeholder="Street / Area"
         style={styles.input}
-        placeholderTextColor="#5c5b5bff"
         value={form.street}
         onChangeText={(val) => handleChange("street", val)}
       />
       <TextInput
         placeholder="Landmark"
         style={styles.input}
-        placeholderTextColor="#5c5b5bff"
         value={form.landmark}
         onChangeText={(val) => handleChange("landmark", val)}
       />
       <TextInput
         placeholder="City"
         style={styles.input}
-        placeholderTextColor="#5c5b5bff"
         value={form.city}
         onChangeText={(val) => handleChange("city", val)}
       />
       <TextInput
         placeholder="Pincode"
         style={styles.input}
-        placeholderTextColor="#5c5b5bff"
         keyboardType="numeric"
         value={form.pincode}
         onChangeText={(val) => handleChange("pincode", val)}
@@ -287,7 +260,6 @@ const Address = () => {
       <TextInput
         placeholder="State"
         style={styles.input}
-        placeholderTextColor="#5c5b5bff"
         value={form.state}
         onChangeText={(val) => handleChange("state", val)}
       />
@@ -358,7 +330,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
-    color: "#222", // ✅ input text color
+    color: "#222",
     marginBottom: 12,
     borderWidth: 1,
     borderColor: "#ddd",
@@ -371,4 +343,21 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   saveText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  // ✅ New Payment Button Styles
+  paymentBtn: {
+    position: "absolute",
+    bottom: 20,
+    left: 16,
+    right: 16,
+    backgroundColor: "#860f33ff",
+    paddingVertical: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    elevation: 4,
+  },
+  paymentText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+  },
 });

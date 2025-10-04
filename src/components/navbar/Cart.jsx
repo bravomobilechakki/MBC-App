@@ -7,6 +7,9 @@ import {
   FlatList,
   Image,
   TouchableOpacity,
+  LayoutAnimation,
+  Platform,
+  UIManager,
 } from "react-native";
 import axios from "axios";
 import SummaryApi from "../../common";
@@ -14,12 +17,19 @@ import { UserContext } from "../../context/UserContext";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 const Cart = () => {
   const { token } = useContext(UserContext);
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [showPriceDetails, setShowPriceDetails] = useState(false);
   const navigation = useNavigation();
 
+  // Fetch cart and select all items by default
   const fetchCart = async () => {
     try {
       if (!token) {
@@ -34,12 +44,22 @@ const Cart = () => {
 
       if (response.data.success) {
         setCart(response.data.data.items);
+
+        // Select all items by default
+        const allIds = response.data.data.items.map((item) => item._id);
+        setSelectedItems(allIds);
       }
     } catch (error) {
       console.error("Error fetching cart:", error.response?.data || error.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedItems((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    );
   };
 
   const increaseQty = (id) => {
@@ -62,13 +82,26 @@ const Cart = () => {
 
   const removeItem = (id) => {
     setCart((prev) => prev.filter((item) => item._id !== id));
+    setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
   };
 
+  const getSubtotal = () => {
+    return cart
+      .filter((item) => selectedItems.includes(item._id))
+      .reduce((total, item) => total + item.product.price * item.quantity, 0);
+  };
+
+  const deliveryCharge = 40;
+  const discount = 50;
+
   const getTotal = () => {
-    return cart.reduce(
-      (total, item) => total + item.product.price * item.quantity,
-      0
-    );
+    const subtotal = getSubtotal();
+    return Math.max(subtotal + deliveryCharge - discount, 0);
+  };
+
+  const togglePriceDetails = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setShowPriceDetails(!showPriceDetails);
   };
 
   useEffect(() => {
@@ -86,13 +119,13 @@ const Cart = () => {
 
   return (
     <View style={styles.container}>
-      {/* 🔙 Custom Header */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate("Home")}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Cart</Text>
-        <View style={{ width: 24 }} /> {/* Spacer for alignment */}
+        <View style={{ width: 24 }} />
       </View>
 
       {cart.length === 0 ? (
@@ -103,26 +136,42 @@ const Cart = () => {
             data={cart}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.item}
-                onPress={() =>
-                  navigation.navigate("ProductDetails", {
-                    product: item.product,
-                  })
-                }
-              >
+              <View style={styles.item}>
+                {/* Checkbox */}
+                <TouchableOpacity onPress={() => toggleSelect(item._id)}>
+                  <Ionicons
+                    name={
+                      selectedItems.includes(item._id)
+                        ? "checkbox-outline"
+                        : "square-outline"
+                    }
+                    size={24}
+                    color="#c5b25fff"
+                    style={{ marginRight: 8 }}
+                  />
+                </TouchableOpacity>
+
                 {/* Product Image */}
-                <Image
-                  source={{ uri: item.product.image }}
-                  style={styles.image}
-                />
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate("ProductDetails", { product: item.product })
+                  }
+                >
+                  <Image
+                    source={
+                      item.product.image
+                        ? { uri: item.product.image }
+                        : { uri: "https://via.placeholder.com/80?text=No+Image" }
+                    }
+                    style={styles.image}
+                  />
+                </TouchableOpacity>
 
                 {/* Product Info */}
                 <View style={styles.info}>
                   <Text style={styles.name}>{item.product.name}</Text>
                   <Text style={styles.price}>₹{item.product.price}</Text>
 
-                  {/* Quantity Controls */}
                   <View style={styles.quantityRow}>
                     <TouchableOpacity
                       onPress={() => decreaseQty(item._id)}
@@ -142,19 +191,64 @@ const Cart = () => {
                   </View>
                 </View>
 
-                {/* Remove Button */}
                 <TouchableOpacity onPress={() => removeItem(item._id)}>
                   <Ionicons name="trash" size={22} color="red" />
                 </TouchableOpacity>
-              </TouchableOpacity>
+              </View>
             )}
           />
 
-          {/* Cart Total */}
+          {/* Footer Section */}
           <View style={styles.footer}>
-            <Text style={styles.total}>Total: ₹{getTotal()}</Text>
-            <TouchableOpacity style={styles.checkoutBtn}>
-              <Text style={styles.checkoutText}>Proceed to Checkout</Text>
+            {/* Expandable Price Details */}
+            <TouchableOpacity style={styles.priceHeader} onPress={togglePriceDetails}>
+              <Text style={styles.totalTitle}>Price Details</Text>
+              <Ionicons
+                name={showPriceDetails ? "chevron-up" : "chevron-down"}
+                size={22}
+                color="#444"
+              />
+            </TouchableOpacity>
+
+            {showPriceDetails && (
+              <View style={styles.priceDetailsContainer}>
+                <View style={styles.priceRow}>
+                  <Text style={styles.label}>Subtotal</Text>
+                  <Text style={styles.value}>₹{getSubtotal()}</Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={styles.label}>Delivery Charge</Text>
+                  <Text style={styles.value}>₹{deliveryCharge}</Text>
+                </View>
+                <View style={styles.priceRow}>
+                  <Text style={styles.label}>Discount</Text>
+                  <Text style={[styles.value, { color: "green" }]}>-₹{discount}</Text>
+                </View>
+
+                <View style={styles.divider} />
+
+                <View style={styles.grandTotalRow}>
+                  <Text style={styles.grandTotalLabel}>Grand Total</Text>
+                  <Text style={styles.grandTotalAmount}>₹{getTotal()}</Text>
+                </View>
+              </View>
+            )}
+
+            {/* Checkout Button */}
+            <TouchableOpacity
+              style={[
+                styles.checkoutBtn,
+                selectedItems.length === 0 && { backgroundColor: "#ccc" },
+              ]}
+              disabled={selectedItems.length === 0}
+              onPress={() =>
+                navigation.navigate("Address", {
+                  selectedItems: cart.filter((i) => selectedItems.includes(i._id)),
+                  totalAmount: getTotal(),
+                })
+              }
+            >
+              <Text style={styles.checkoutText}>Proceed to Payment</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -164,13 +258,7 @@ const Cart = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#f5f5f5",
-    paddingHorizontal: 12,
-    paddingTop: 8,
-  },
-
+  container: { flex: 1, backgroundColor: "#f5f5f5", paddingHorizontal: 12 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -183,15 +271,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   headerTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
-
-  empty: { 
-    fontSize: 18, 
-    fontWeight: "600", 
-    textAlign: "center", 
-    marginTop: 50, 
-    color: "#666" 
-  },
-
+  empty: { fontSize: 18, fontWeight: "600", textAlign: "center", marginTop: 50, color: "#666" },
   item: {
     flexDirection: "row",
     alignItems: "center",
@@ -205,47 +285,45 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-
-  image: { 
-    width: 80, 
-    height: 80, 
-    borderRadius: 10, 
-    marginRight: 12, 
-    backgroundColor: "#f0f0f0" 
-  },
-
+  image: { width: 80, height: 80, borderRadius: 10, marginRight: 12, backgroundColor: "#f0f0f0" },
   info: { flex: 1 },
   name: { fontSize: 16, fontWeight: "600", color: "#333", marginBottom: 4 },
   price: { fontSize: 15, fontWeight: "bold", color: "#2e7d32", marginBottom: 6 },
-
   quantityRow: { flexDirection: "row", alignItems: "center", marginTop: 4 },
-  qtyBtn: {
-    backgroundColor: "#c5b25fff",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginHorizontal: 5,
-  },
+  qtyBtn: { backgroundColor: "#c5b25fff", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginHorizontal: 5 },
   qtyText: { fontSize: 16, fontWeight: "600", color: "#333", minWidth: 24, textAlign: "center" },
-
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderColor: "#eee",
+  footer: { padding: 16, borderTopWidth: 1, borderColor: "#eee", backgroundColor: "#fff" },
+  priceHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  totalTitle: { fontSize: 18, fontWeight: "700", color: "#333" },
+  priceDetailsContainer: {
     backgroundColor: "#fff",
-    elevation: 8,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 12,
     shadowColor: "#000",
     shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: -2 },
+    shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
+    elevation: 3,
   },
-  total: { fontSize: 18, fontWeight: "700", color: "#222", marginBottom: 12 },
-  checkoutBtn: {
-    backgroundColor: "#ff4d4d",
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
+  priceRow: 
+  { flexDirection: "row",
+     justifyContent: "space-between", 
+     marginVertical: 4 },
+  grandTotalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
   },
+  grandTotalLabel: { fontSize: 18, fontWeight: "700", color: "#333" },
+  grandTotalAmount: { fontSize: 18, fontWeight: "700", color: "#ff4d4d" },
+  label: { fontSize: 15, color: "#555" },
+  value: { fontSize: 15, fontWeight: "600", color: "#222" },
+  divider: { height: 1, backgroundColor: "#ddd", marginVertical: 6 },
+  checkoutBtn: { backgroundColor: "#ff4d4d", paddingVertical: 14, borderRadius: 10, alignItems: "center" },
   checkoutText: { color: "#fff", fontSize: 16, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 },
 });
 

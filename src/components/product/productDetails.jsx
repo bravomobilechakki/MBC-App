@@ -75,6 +75,10 @@ const ProductDetails = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
+
+
+
+
         <Text style={styles.headerTitle}>Product Details</Text>
         <View style={{ width: 24 }} /> {/* Spacer */}
       </View>

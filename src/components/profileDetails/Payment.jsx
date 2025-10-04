@@ -1,4 +1,4 @@
-    import React, { useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,11 @@ const Payment = () => {
     { id: "NETBANKING", label: "Netbanking", icon: "laptop-outline" },
     { id: "COD", label: "Cash on Delivery", icon: "cash-outline" },
   ];
+
+  // ✅ Navigate to OrderDoneAnimated screen
+  const handlePayment = () => {
+    navigation.navigate("orderdone"); // Must match the Stack.Screen name
+  };
 
   return (
     <View style={styles.container}>
@@ -43,9 +48,7 @@ const Payment = () => {
             <Text style={styles.value}>₹50</Text>
           </View>
           <View style={styles.row}>
-            <Text style={[styles.label, { fontWeight: "600" }]}>
-              Grand Total
-            </Text>
+            <Text style={[styles.label, { fontWeight: "600" }]}>Grand Total</Text>
             <Text style={[styles.value, { fontWeight: "600" }]}>₹5,548</Text>
           </View>
         </View>
@@ -82,7 +85,7 @@ const Payment = () => {
 
       {/* Pay Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.payBtn}>
+        <TouchableOpacity style={styles.payBtn} onPress={handlePayment}>
           <Text style={styles.payText}>Pay ₹5,548</Text>
         </TouchableOpacity>
       </View>
@@ -94,20 +97,15 @@ export default Payment;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9F9F9", padding: 16 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
+  header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
+  headerTitle: { 
+    flex: 1, 
+    fontSize: 20, 
+    fontWeight: "500", 
+    color: "#333", 
+    marginLeft: 10, 
+    marginRight: 24 
   },
-  headerTitle: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: "500",
-    color: "#333",
- marginLeft:10,
-    marginRight: 24, // keeps title centered
-  },
-
   summary: {
     backgroundColor: "#fff",
     padding: 16,
@@ -115,22 +113,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 2,
   },
-  summaryTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 10,
-    color: "#444",
-  },
+  summaryTitle: { fontSize: 16, fontWeight: "600", marginBottom: 10, color: "#444" },
   row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
   label: { fontSize: 14, color: "#555" },
   value: { fontSize: 14, color: "#222" },
-
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 10,
-    color: "#444",
-  },
+  sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: 10, color: "#444" },
   method: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -144,7 +131,6 @@ const styles = StyleSheet.create({
   },
   methodRow: { flexDirection: "row", alignItems: "center" },
   methodText: { fontSize: 15, color: "#222" },
-
   footer: {
     position: "absolute",
     bottom: 0,
@@ -155,11 +141,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ddd",
   },
-  payBtn: {
-    backgroundColor: "#860f33ff",
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-  },
+  payBtn: { backgroundColor: "#860f33ff", paddingVertical: 14, borderRadius: 10, alignItems: "center" },
   payText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });

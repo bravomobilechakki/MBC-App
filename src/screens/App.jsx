@@ -27,6 +27,8 @@ import Booking from "../components/footer(Tab)/Booking";
 import ProductDetails from "../components/product/productDetails";
 import Product from "../components/product/product";
 import Review from "../components/product/review";
+import OrderDoneAnimated from "../components/profileDetails/OrderDone";
+
 
 // Dummy placeholder screens
 const SearchScreen = () => (
@@ -113,6 +115,7 @@ const AppNavigator = () => {
       <Stack.Screen name="ProductDetails" component={ProductDetails} />
       <Stack.Screen name="Product" component={Product} />
          <Stack.Screen name="Review" component={Review} />
+         <Stack.Screen name="orderdone" component={OrderDoneAnimated}/>
     </Stack.Navigator>
   );
 };
