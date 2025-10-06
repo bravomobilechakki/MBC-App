@@ -67,6 +67,13 @@ const Dashboard = () => {
         )}
       </ScrollView>
 
+
+
+
+
+
+
+
       {/* Offer Banner */}
       <View style={styles.offerCard}>
         <Text style={styles.offerTitle}>10-20% OFF</Text>
