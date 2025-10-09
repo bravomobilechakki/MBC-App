@@ -128,7 +128,7 @@ const ProductDetails = () => {
 
       {/* ✅ Review Section */}
       <View style={{ paddingHorizontal: 16, marginTop: 20 }}>
-        <Review />
+        <Review productId={product._id} />
       </View>
     </ScrollView>
   );

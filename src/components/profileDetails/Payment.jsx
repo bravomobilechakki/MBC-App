@@ -1,11 +1,11 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   Alert,
+  ScrollView,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -14,42 +14,90 @@ import SummaryApi from "../../common";
 import { UserContext } from "../../context/UserContext";
 
 const Payment = () => {
-  const [selected, setSelected] = useState("UPI");
   const navigation = useNavigation();
   const route = useRoute();
   const { token } = useContext(UserContext);
   const { selectedItems, totalAmount, address } = route.params;
 
-  const methods = [
-    { id: "UPI", label: "UPI / Wallets", icon: "logo-google" },
-    { id: "CARD", label: "Credit / Debit Card", icon: "card-outline" },
-    { id: "NETBANKING", label: "Netbanking", icon: "laptop-outline" },
-    { id: "COD", label: "Cash on Delivery", icon: "cash-outline" },
-  ];
+  const [selectedPayment, setSelectedPayment] = useState("COD"); // Default COD
 
-  const handlePayment = async () => {
+  const handlePlaceOrder = async () => {
     try {
+      if (!token) {
+        Alert.alert("Login Required", "Please login before placing an order.");
+        return;
+      }
+
       const orderPayload = {
-        address,
-        items: selectedItems,
-        totalAmount,
-        paymentMethod: selected,
+        user: token,
+        orderItems: selectedItems.map((item) => ({
+          product: item._id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          image: item.image,
+        })),
+        shippingAddress: {
+          street: address?.street,
+          city: address?.city,
+          state: address?.state,
+          zipCode: address?.pincode,
+          country: "India",
+          isDefault: true,
+        },
+        paymentMethod: selectedPayment,
+        paymentInfo: {
+          id: selectedPayment === "COD" ? "COD-PAYMENT" : "ONLINE-PAYMENT",
+          status: selectedPayment === "COD" ? "Pending" : "Paid",
+        },
+        itemsPrice: totalAmount,
+        taxPrice: Math.round(totalAmount * 0.05),
+        shippingPrice: 0,
+        totalPrice: totalAmount + Math.round(totalAmount * 0.05),
       };
+
+      console.log("📦 Creating Order:", orderPayload);
 
       const response = await axios.post(SummaryApi.createOrder.url, orderPayload, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (response.data.success) {
-        navigation.navigate("orderdone");
+        Alert.alert(
+          "Order Placed",
+          `Your order has been successfully placed using ${selectedPayment}.`,
+          [{ text: "OK", onPress: () => navigation.navigate("orderdone") }]
+        );
       } else {
-        Alert.alert("Error", "Failed to create order.");
+        Alert.alert("Error", response.data.message || "Failed to place the order.");
       }
     } catch (error) {
-      console.error("Error creating order:", error);
-      Alert.alert("Error", "Something went wrong while creating the order.");
+      console.error("❌ Error creating order:", error.response?.data || error.message);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Something went wrong while placing the order."
+      );
     }
   };
+
+  const PaymentOption = ({ title, subtitle, iconName, method }) => (
+    <TouchableOpacity
+      style={[
+        styles.paymentOption,
+        selectedPayment === method && { borderColor: "#047857", backgroundColor: "#ECFDF5" },
+      ]}
+      onPress={() => setSelectedPayment(method)}
+    >
+      <Ionicons name={iconName} size={28} color={selectedPayment === method ? "#047857" : "#333"} />
+      <View style={{ flex: 1, marginLeft: 12 }}>
+        <Text style={[styles.paymentTitle, selectedPayment === method && { color: "#047857" }]}>
+          {title}
+        </Text>
+        {subtitle && <Text style={styles.paymentSubtitle}>{subtitle}</Text>}
+      </View>
+      {selectedPayment === method && <Ionicons name="checkmark-circle" size={24} color="#047857" />}
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -58,53 +106,62 @@ const Payment = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payment</Text>
+        <Text style={styles.headerTitle}>Payment Options</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Order Summary */}
         <View style={styles.summary}>
           <Text style={styles.summaryTitle}>Order Summary</Text>
           <View style={styles.row}>
-            <Text style={[styles.label, { fontWeight: "600" }]}>Grand Total</Text>
-            <Text style={[styles.value, { fontWeight: "600" }]}>₹{totalAmount}</Text>
+            <Text style={styles.label}>Items Total</Text>
+            <Text style={styles.value}>₹{totalAmount}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Tax (5%)</Text>
+            <Text style={styles.value}>₹{Math.round(totalAmount * 0.05)}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={[styles.label, styles.totalLabel]}>Grand Total</Text>
+            <Text style={[styles.value, styles.totalValue]}>
+              ₹{totalAmount + Math.round(totalAmount * 0.05)}
+            </Text>
           </View>
         </View>
 
-        {/* Payment Methods */}
-        <Text style={styles.sectionTitle}>Choose Payment Method</Text>
-        {methods.map((method) => (
-          <TouchableOpacity
-            key={method.id}
-            style={[
-              styles.method,
-              selected === method.id && {
-                borderColor: "#d47e85ff",
-                backgroundColor: "#eef5ff",
-              },
-            ]}
-            onPress={() => setSelected(method.id)}
-          >
-            <View style={styles.methodRow}>
-              <Ionicons
-                name={method.icon}
-                size={22}
-                color="#333"
-                style={{ marginRight: 10 }}
-              />
-              <Text style={styles.methodText}>{method.label}</Text>
-            </View>
-            {selected === method.id && (
-              <Ionicons name="checkmark-circle" size={22} color="#914747ff" />
-            )}
-          </TouchableOpacity>
-        ))}
+        {/* Payment Options */}
+        <PaymentOption
+          title="Cash on Delivery"
+          subtitle="Pay when your order is delivered"
+          iconName="cash-outline"
+          method="COD"
+        />
+        <PaymentOption
+          title="UPI / PhonePe / Google Pay"
+          subtitle="Secure payment via UPI apps"
+          iconName="wallet-outline"
+          method="UPI"
+        />
+        <PaymentOption
+          title="Credit / Debit Card"
+          subtitle="Visa, Mastercard, Rupay accepted"
+          iconName="card-outline"
+          method="CARD"
+        />
+        <PaymentOption
+          title="Net Banking"
+          subtitle="Pay using your bank account"
+          iconName="bank-outline"
+          method="NETBANKING"
+        />
       </ScrollView>
 
-      {/* Pay Button */}
+      {/* Place Order Button */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.payBtn} onPress={handlePayment}>
-          <Text style={styles.payText}>Pay ₹{totalAmount}</Text>
+        <TouchableOpacity style={styles.payBtn} onPress={handlePlaceOrder}>
+          <Text style={styles.payText}>
+            Place Order (₹{totalAmount + Math.round(totalAmount * 0.05)})
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -116,13 +173,14 @@ export default Payment;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9F9F9", padding: 16 },
   header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
-  headerTitle: { 
-    flex: 1, 
-    fontSize: 20, 
-    fontWeight: "500", 
-    color: "#333", 
-    marginLeft: 10, 
-    marginRight: 24 
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#333",
+    marginLeft: 10,
+    marginRight: 24,
+    textAlign: "center",
   },
   summary: {
     backgroundColor: "#fff",
@@ -135,20 +193,20 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
   label: { fontSize: 14, color: "#555" },
   value: { fontSize: 14, color: "#222" },
-  sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: 10, color: "#444" },
-  method: {
+  totalLabel: { fontWeight: "700" },
+  totalValue: { fontWeight: "700", fontSize: 16, color: "#000" },
+  paymentOption: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    padding: 14,
     backgroundColor: "#fff",
+    padding: 16,
     borderRadius: 10,
-    marginBottom: 12,
     borderWidth: 1,
     borderColor: "#ddd",
+    marginBottom: 12,
   },
-  methodRow: { flexDirection: "row", alignItems: "center" },
-  methodText: { fontSize: 15, color: "#222" },
+  paymentTitle: { fontSize: 16, fontWeight: "600", color: "#333" },
+  paymentSubtitle: { fontSize: 13, color: "#555", marginTop: 2 },
   footer: {
     position: "absolute",
     bottom: 0,
@@ -159,6 +217,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ddd",
   },
-  payBtn: { backgroundColor: "#860f33ff", paddingVertical: 14, borderRadius: 10, alignItems: "center" },
+  payBtn: {
+    backgroundColor: "#047857",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+  },
   payText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });

@@ -15,6 +15,8 @@ import SummaryApi from '../../common';
 import { UserContext } from '../../context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const OTP_LENGTH = 4;
+
 const SignUp = ({ navigation }) => {
   const { setUser, setToken } = useContext(UserContext);
   const [mobile, setMobile] = useState('');
@@ -26,37 +28,26 @@ const SignUp = ({ navigation }) => {
   const [showOTP, setShowOTP] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '']);
-
+  const [otpDigits, setOtpDigits] = useState(Array(OTP_LENGTH).fill(''));
   const inputsRefs = useRef([]);
 
   const handleSendOtp = async () => {
-    if (!mobile.trim()) {
-      Alert.alert('Error', 'Please enter your mobile number.');
-      return;
-    }
+    if (!mobile.trim()) return Alert.alert('Error', 'Please enter your mobile number.');
     setIsLoading(true);
     try {
       const response = await fetch(SummaryApi.signUP.url, {
         method: SummaryApi.signUP.method.toUpperCase(),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mobile: mobile,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile }),
       });
-
       const result = await response.json();
       if (result.success) {
         Alert.alert('Success', 'OTP sent to your mobile.');
         setShowOTP(true);
-      } else {
-        Alert.alert('Error', result.message || 'Failed to send OTP.');
-      }
+        setTimeout(() => inputsRefs.current[0]?.focus(), 100); // focus first OTP box
+      } else Alert.alert('Error', result.message || 'Failed to send OTP.');
     } catch (error) {
       Alert.alert('Error', 'Something went wrong.');
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -65,46 +56,34 @@ const SignUp = ({ navigation }) => {
   const handleOtpChange = (text, index) => {
     if (/^\d*$/.test(text)) {
       const newOtpDigits = [...otpDigits];
-      newOtpDigits[index] = text;
+      newOtpDigits[index] = text.slice(-1);
       setOtpDigits(newOtpDigits);
-      if (text.length === 1 && index < 3) {
+      if (text && index < OTP_LENGTH - 1) {
         inputsRefs.current[index + 1].focus();
+      } else if (!text && index > 0) {
+        inputsRefs.current[index - 1].focus();
       }
     }
   };
 
   const handleVerifyOTP = async () => {
     const otp = otpDigits.join('');
-    if (otp.length !== 4) {
-      Alert.alert('Error', 'Please enter a 4-digit OTP.');
-      return;
-    }
+    if (otp.length !== OTP_LENGTH) return Alert.alert('Error', `Please enter ${OTP_LENGTH}-digit OTP.`);
     if (!name.trim() || !street.trim() || !city.trim() || !stateField.trim() || !postalCode.trim()) {
-      Alert.alert('Error', 'Please fill all profile fields.');
-      return;
+      return Alert.alert('Error', 'Please fill all profile fields.');
     }
     setIsLoading(true);
     try {
       const response = await fetch(SummaryApi.verifyOTP.url, {
         method: SummaryApi.verifyOTP.method.toUpperCase(),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mobile: mobile,
-          otp: otp,
-          name: name,
-          address: {
-            street: street,
-            city: city,
-            state: stateField,
-            zipCode: postalCode,
-            country: "India",
-            isDefault: true,
-          },
+          mobile,
+          otp,
+          name,
+          address: { street, city, state: stateField, zipCode: postalCode, country: 'India', isDefault: true },
         }),
       });
-
       const result = await response.json();
       if (result.success) {
         setToken(result.data.token);
@@ -114,12 +93,9 @@ const SignUp = ({ navigation }) => {
         Alert.alert('Success', 'Account created successfully!');
         setIsVerified(true);
         navigation.navigate('Profile');
-      } else {
-        Alert.alert('Error', result.message || 'OTP verification failed.');
-      }
+      } else Alert.alert('Error', result.message || 'OTP verification failed.');
     } catch (error) {
       Alert.alert('Error', 'Something went wrong.');
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -159,6 +135,9 @@ const SignUp = ({ navigation }) => {
                   value={digit}
                   onChangeText={(text) => handleOtpChange(text, index)}
                   ref={(ref) => (inputsRefs.current[index] = ref)}
+                  autoFocus={index === 0}
+                  textAlign="center"
+                  secureTextEntry
                 />
               ))}
             </View>
@@ -261,103 +240,23 @@ const SignUp = ({ navigation }) => {
 export default SignUp;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  innerContainer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    alignSelf: 'flex-start',
-    marginBottom: 30,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 15,
-    paddingHorizontal: 10,
-    width: '100%',
-  },
-  icon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    height: 50,
-    fontSize: 16,
-  },
-  agreeText: {
-    fontSize: 12,
-    color: '#777',
-    textAlign: 'center',
-    marginBottom: 20,
-    paddingHorizontal: 10,
-  },
-  button: {
-    backgroundColor: '#ff375f',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  orText: {
-    textAlign: 'center',
-    color: '#777',
-    marginBottom: 20,
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 30,
-  },
-  socialButton: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 50,
-    padding: 10,
-  },
-  socialIcon: {
-    width: 30,
-    height: 30,
-  },
-  loginContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  loginText: {
-    color: '#777',
-  },
-  loginLink: {
-    color: '#ff375f',
-    fontWeight: 'bold',
-  },
-  otpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '80%',
-    marginBottom: 20,
-  },
-  otpInput: {
-    width: 50,
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    textAlign: 'center',
-    fontSize: 20,
-  },
+  
+  container: { flex: 1, backgroundColor: '#fff' },
+  innerContainer: { padding: 20, alignItems: 'center' },
+  title: { fontSize: 40, fontWeight: 'bold', alignSelf: 'flex-start', marginBottom: 30 },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', borderColor: '#ccc', borderWidth: 1, borderRadius: 8, marginBottom: 15, paddingHorizontal: 10, width: '100%' },
+  icon: { marginRight: 10 },
+  input: { flex: 1, height: 50, fontSize: 16 },
+  agreeText: { fontSize: 12, color: '#777', textAlign: 'center', marginBottom: 20 },
+  otpContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '80%', marginBottom: 20 , color:'#777'},
+  otpInput: { width: 50, height: 50, borderColor: '#3b2d2dff', borderWidth: 1, borderRadius: 8, fontSize: 20 , color :'#777'},
+  button: { backgroundColor: '#ff375f', padding: 15, borderRadius: 8, alignItems: 'center', width: '100%', marginBottom: 20 },
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  orText: { textAlign: 'center', color: '#777', marginBottom: 20 },
+  socialContainer: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', marginBottom: 30 },
+  socialButton: { borderWidth: 1, borderColor: '#ccc', borderRadius: 50, padding: 10 },
+  socialIcon: { width: 30, height: 30 },
+  loginContainer: { flexDirection: 'row', justifyContent: 'center' },
+  loginText: { color: '#777' },
+  loginLink: { color: '#ff375f', fontWeight: 'bold' },
 });

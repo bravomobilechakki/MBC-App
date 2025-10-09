@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import {
   View,
   Text,
@@ -14,67 +14,53 @@ import SummaryApi from '../../common';
 import { UserContext } from '../../context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const OTP_LENGTH = 4; // 4-digit OTP
+
 const Login = ({ navigation }) => {
   const { setUser, setToken } = useContext(UserContext);
   const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [stage, setStage] = useState('phone'); // 'phone' or 'otp'
   const [isLoading, setIsLoading] = useState(false);
+  const inputs = useRef([]);
 
+  // Send OTP
   const handleSendOtp = async () => {
-    if (!mobile) {
-      Alert.alert('Error', 'Please enter your mobile number');
-      return;
-    }
+    if (!mobile) return Alert.alert('Error', 'Please enter your mobile number');
     setIsLoading(true);
     try {
       const response = await fetch(SummaryApi.logIn.url, {
         method: SummaryApi.logIn.method.toUpperCase(),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mobile: mobile,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile }),
       });
-
       const result = await response.json();
       setIsLoading(false);
-
       if (result.success) {
         Alert.alert('Success', 'OTP sent to your mobile');
         setStage('otp');
-      } else {
-        Alert.alert('Error', result.message || 'Failed to send OTP');
-      }
+        setOtp(Array(OTP_LENGTH).fill(''));
+        setTimeout(() => inputs.current[0]?.focus(), 100); // focus first box
+      } else Alert.alert('Error', result.message || 'Failed to send OTP');
     } catch (error) {
       setIsLoading(false);
       Alert.alert('Error', 'Something went wrong');
-      console.error(error);
     }
   };
 
+  // Verify OTP
   const handleVerifyOtp = async () => {
-    if (!otp) {
-      Alert.alert('Error', 'Please enter OTP');
-      return;
-    }
+    const otpValue = otp.join('');
+    if (otpValue.length !== OTP_LENGTH) return Alert.alert('Error', 'Enter complete OTP');
     setIsLoading(true);
     try {
       const response = await fetch(SummaryApi.verifyOTP.url, {
         method: SummaryApi.verifyOTP.method.toUpperCase(),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mobile: mobile,
-          otp: otp,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobile, otp: otpValue }),
       });
-
       const result = await response.json();
       setIsLoading(false);
-
       if (result.success) {
         setToken(result.data.token);
         setUser(result.data.user);
@@ -82,13 +68,24 @@ const Login = ({ navigation }) => {
         await AsyncStorage.setItem('user', JSON.stringify(result.data.user));
         Alert.alert('Success', result.message);
         navigation.navigate('Profile');
-      } else {
-        Alert.alert('Error', result.message || 'Invalid OTP');
-      }
+      } else Alert.alert('Error', result.message || 'Invalid OTP');
     } catch (error) {
       setIsLoading(false);
       Alert.alert('Error', 'Something went wrong');
-      console.error(error);
+    }
+  };
+
+  // Handle OTP input change
+  const handleOtpChange = (text, index) => {
+    const newOtp = [...otp];
+    newOtp[index] = text.slice(-1); // only last character
+    setOtp(newOtp);
+
+    if (text && index < OTP_LENGTH - 1) {
+      inputs.current[index + 1].focus();
+    }
+    if (!text && index > 0) {
+      inputs.current[index - 1].focus();
     }
   };
 
@@ -115,17 +112,24 @@ const Login = ({ navigation }) => {
         </>
       ) : (
         <>
-          <View style={styles.inputContainer}>
-            <Ionicons name="lock-closed-outline" size={20} color="#777" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Enter OTP"
-              placeholderTextColor="#777"
-              keyboardType="number-pad"
-              secureTextEntry={true}
-              value={otp}
-              onChangeText={setOtp}
-            />
+          <Text style={styles.otpLabel}>Enter OTP</Text>
+          <View style={styles.otpContainer}>
+            {otp.map((digit, index) => (
+              <TextInput
+                key={index}
+                ref={el => (inputs.current[index] = el)}
+                style={styles.otpBox}
+                keyboardType="number-pad"
+                maxLength={1}
+                value={digit}
+                onChangeText={text => handleOtpChange(text, index)}
+                placeholder="•"
+                placeholderTextColor="#ccc"
+                secureTextEntry
+                textAlign="center"
+                autoFocus={index === 0}
+              />
+            ))}
           </View>
           <TouchableOpacity style={styles.button} onPress={handleVerifyOtp} disabled={isLoading}>
             <Text style={styles.buttonText}>{isLoading ? 'Verifying...' : 'Verify OTP'}</Text>
@@ -160,17 +164,8 @@ const Login = ({ navigation }) => {
 export default Login;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    marginBottom: 40,
-    textAlign: 'left',
-  },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  title: { fontSize: 48, fontWeight: 'bold', marginBottom: 40 },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -178,18 +173,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     marginBottom: 15,
-    marginTop: 8,
     paddingHorizontal: 10,
   },
-  icon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    text :"black",
-    height: 50,
-    fontSize: 16,
-  },
+  icon: { marginRight: 10 },
+  input: { flex: 1, color: 'black', height: 50, fontSize: 16 },
   button: {
     backgroundColor: '#ff375f',
     padding: 15,
@@ -198,40 +185,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  orText: {
-    textAlign: 'center',
-    color: '#777',
-    marginBottom: 20,
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 30,
-  },
-  socialButton: {
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  otpLabel: { fontSize: 16, marginBottom: 10, color: '#444' },
+  otpContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  otpBox: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 50,
-    padding: 10,
-  },
-  socialIcon: {
-    width: 30,
-    height: 30,
-  },
-  signupContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  signupText: {
-    color: '#777',
-  },
-  signupLink: {
+    borderRadius: 8,
+    width: 50,
+    height: 50,
+    fontSize: 20,
     color: '#ff375f',
-    fontWeight: 'bold',
   },
+  orText: { textAlign: 'center', color: '#777', marginBottom: 20 },
+  socialContainer: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 30 },
+  socialButton: { borderWidth: 1, borderColor: '#ccc', borderRadius: 50, padding: 10 },
+  socialIcon: { width: 30, height: 30 },
+  signupContainer: { flexDirection: 'row', justifyContent: 'center' },
+  signupText: { color: '#777' },
+  signupLink: { color: '#ff375f', fontWeight: 'bold' },
 });

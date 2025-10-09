@@ -16,7 +16,6 @@ const Address = () => {
   const route = useRoute();
   const { selectedItems, totalAmount } = route.params || {};
   const [mode, setMode] = useState("list");
-  
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [addresses, setAddresses] = useState([
@@ -40,7 +39,7 @@ const Address = () => {
     customLabel: "",
     name: "",
     phone: "",
-    house: "",
+    house: "",                                                
     street: "",
     landmark: "",
     city: "",
@@ -64,12 +63,11 @@ const Address = () => {
     } else if (mode === "edit" && selected) {
       setAddresses(
         addresses.map((addr) =>
-          addr.id === selected.id ? { ...newForm, id: addr.id } : addr
+          addr.id === selected ? { ...newForm, id: addr.id } : addr
         )
       );
     }
 
-    // ✅ Show success and go back to list
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);
@@ -87,7 +85,6 @@ const Address = () => {
     setAddresses(addresses.filter((addr) => addr.id !== id));
   };
 
-  // --- LIST SCREEN ---
   if (mode === "list") {
     const selectedAddress = addresses.find(addr => addr.id === selected);
     return (
@@ -151,7 +148,6 @@ const Address = () => {
           </TouchableOpacity>
         </ScrollView>
 
-        {/* ✅ Proceed to Payment Button */}
         <TouchableOpacity
           style={styles.paymentBtn}
           onPress={() => {
@@ -168,7 +164,6 @@ const Address = () => {
     );
   }
 
-  // --- ADD / EDIT FORM ---
   return (
     <ScrollView
       style={styles.container}
@@ -209,6 +204,7 @@ const Address = () => {
       {form.label === "Other" && (
         <TextInput
           placeholder="Enter Custom Label"
+          placeholderTextColor="#888"
           style={styles.input}
           value={form.customLabel}
           onChangeText={(val) => handleChange("customLabel", val)}
@@ -218,12 +214,14 @@ const Address = () => {
       <Text style={styles.sectionTitle}>Contact Info</Text>
       <TextInput
         placeholder="Full Name"
+        placeholderTextColor="#888"
         style={styles.input}
         value={form.name}
         onChangeText={(val) => handleChange("name", val)}
       />
       <TextInput
         placeholder="Phone Number"
+        placeholderTextColor="#888"
         style={styles.input}
         keyboardType="phone-pad"
         value={form.phone}
@@ -233,30 +231,35 @@ const Address = () => {
       <Text style={styles.sectionTitle}>Address Info</Text>
       <TextInput
         placeholder="House / Flat / Building No."
+        placeholderTextColor="#888"
         style={styles.input}
         value={form.house}
         onChangeText={(val) => handleChange("house", val)}
       />
       <TextInput
         placeholder="Street / Area"
+        placeholderTextColor="#888"
         style={styles.input}
         value={form.street}
         onChangeText={(val) => handleChange("street", val)}
       />
       <TextInput
         placeholder="Landmark"
+        placeholderTextColor="#888"
         style={styles.input}
         value={form.landmark}
         onChangeText={(val) => handleChange("landmark", val)}
       />
       <TextInput
         placeholder="City"
+        placeholderTextColor="#888"
         style={styles.input}
         value={form.city}
         onChangeText={(val) => handleChange("city", val)}
       />
       <TextInput
         placeholder="Pincode"
+        placeholderTextColor="#888"
         style={styles.input}
         keyboardType="numeric"
         value={form.pincode}
@@ -264,6 +267,7 @@ const Address = () => {
       />
       <TextInput
         placeholder="State"
+        placeholderTextColor="#888"
         style={styles.input}
         value={form.state}
         onChangeText={(val) => handleChange("state", val)}
@@ -331,14 +335,14 @@ const styles = StyleSheet.create({
   },
   labelText: { fontSize: 14, color: "#181313ff" },
   input: {
-    backgroundColor: "#eeeeeeff",
+    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 12,
     fontSize: 15,
-    color: "#222",
+    color: "#000",
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#ccc",
   },
   saveBtn: {
     backgroundColor: "#860f33ff",
@@ -348,7 +352,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   saveText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  // ✅ New Payment Button Styles
   paymentBtn: {
     position: "absolute",
     bottom: 20,

@@ -28,7 +28,7 @@ export default function OrderDoneAnimated() {
       Animated.spring(circleScale, { toValue: 1, friction: 5, tension: 120, useNativeDriver: true }),
       Animated.parallel([
         Animated.timing(checkOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.stagger(
+        Animated.stagger( 
           30,
           confettis.map(c =>
             Animated.timing(c.anim, {

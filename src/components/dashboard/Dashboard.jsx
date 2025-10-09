@@ -47,7 +47,7 @@ const Dashboard = () => {
           </TouchableOpacity>
         </View>
       </View>
-+ 
+
       {/* Categories */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categories}>
         {loadingCategories ? (
@@ -66,13 +66,6 @@ const Dashboard = () => {
           <Text style={{ color: "#888" }}>No categories found</Text>
         )}
       </ScrollView>
-
-
-
-
-
-
-
 
       {/* Offer Banner */}
       <View style={styles.offerCard}>
