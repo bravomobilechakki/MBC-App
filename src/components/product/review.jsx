@@ -3,6 +3,7 @@ import {
   TextInput, TouchableOpacity, Alert 
 } from "react-native";
 import React, { useEffect, useState, useContext } from "react";
+import Ionicons from "react-native-vector-icons/Ionicons";
 import SummaryApi from "../../common";
 import { UserContext } from "../../context/UserContext";
 
@@ -61,7 +62,7 @@ const Review = ({ productId }) => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            product: productId, // important
+            product: productId,
             rating,
             comment,
           }),
@@ -92,7 +93,17 @@ const Review = ({ productId }) => {
   const renderItem = ({ item }) => (
     <View style={styles.reviewCard}>
       <Text style={styles.user}>{item.user?.name || "Anonymous"}</Text>
-      <Text style={styles.rating}>⭐ {item.rating}/5</Text>
+      <View style={styles.ratingContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Ionicons
+            key={star}
+            name={item.rating >= star ? "star" : "star-outline"}
+            size={20}
+            color={item.rating >= star ? "#FFD700" : "#ccc"}
+            style={{ marginRight: 2 }}
+          />
+        ))}
+      </View>
       <Text style={styles.comment}>{item.comment}</Text>
     </View>
   );
@@ -113,7 +124,9 @@ const Review = ({ productId }) => {
           contentContainerStyle={{ paddingBottom: 20 }}
         />
       ) : (
-        <Text style={{ color: "#555", marginVertical: 10 }}>No reviews yet. Be the first to review!</Text>
+        <Text style={{ color: "#555", marginVertical: 10 }}>
+          No reviews yet. Be the first to review!
+        </Text>
       )}
 
       <View style={styles.addReviewContainer}>
@@ -128,7 +141,12 @@ const Review = ({ productId }) => {
         <View style={styles.ratingContainer}>
           {[1, 2, 3, 4, 5].map((star) => (
             <TouchableOpacity key={star} onPress={() => setRating(star)}>
-              <Text style={rating >= star ? styles.starSelected : styles.star}>⭐</Text>
+              <Ionicons
+                name={rating >= star ? "star" : "star-outline"}
+                size={28}
+                color={rating >= star ? "#FFD700" : "#ccc"}
+                style={{ marginHorizontal: 2 }}
+              />
             </TouchableOpacity>
           ))}
         </View>
@@ -155,14 +173,13 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: "bold", marginBottom: 12 },
   reviewCard: { backgroundColor: "#f8f8f8", padding: 12, borderRadius: 8, marginBottom: 10 },
   user: { fontSize: 16, fontWeight: "600" },
-  rating: { fontSize: 14, color: "#FFD700", marginVertical: 4 },
+  ratingContainer: { flexDirection: "row", marginVertical: 4 },
   comment: { fontSize: 14, color: "#333" },
   addReviewContainer: { marginTop: 20, borderTopWidth: 1, borderTopColor: "#eee", paddingTop: 20 },
   addReviewTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 10 },
   input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, padding: 10, marginBottom: 10, minHeight: 80 },
-  ratingContainer: { flexDirection: "row", marginBottom: 10 },
-  star: { fontSize: 24, color: "#ccc" },
-  starSelected: { fontSize: 24, color: "#FFD700" },
   submitButton: { backgroundColor: "#A98C43", padding: 12, borderRadius: 8, alignItems: "center" },
   submitButtonText: { color: "#fff", fontWeight: "bold" },
 });
+
+

@@ -38,6 +38,7 @@ const Orders = () => {
       } finally {
         setLoading(false);
       }
+      
     };
 
     if (token) {
@@ -65,7 +66,7 @@ const Orders = () => {
         source={
           item.items[0]?.product.images[0]
             ? { uri: item.items[0].product.images[0] }
-            : require("../../images/flour.png")
+            : require("../../images/facebook.png")
         }
         style={styles.image}
       />

@@ -7,256 +7,310 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  Image,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import Ionicons from 'react-native-vector-icons/Ionicons'; // <-- Added
+import axios from 'axios';
+
+// Import images
+const spicesImg = require('../../images/spice.png'); // Spices image
+const flourImg = require('../../images/aata.png');   // Flour image
+const grindingImg = require('../../images/mortar.png'); // Grinding image
 
 const VenueBooking = () => {
   const navigation = useNavigation();
 
-  // State variables
   const [name, setName] = useState('');
-  const [email, setNumber] = useState('');
-  const [venue, setVenue] = useState('hall');
+  const [phone, setPhone] = useState('');
+  const [venue, setVenue] = useState('');
   const [date, setDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  // Address fields
   const [showAddress, setShowAddress] = useState(false);
   const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
-  const [street, setStreet] = useState('');
+  const [landmark, setLandmark] = useState('');
   const [city, setCity] = useState('');
   const [pincode, setPincode] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Handle booking
-  const handleBooking = () => {
-    if (!name || !email || !building || !floor || !street || !city || !pincode) {
-      Alert.alert("Missing Info", "Please fill all fields including address details.");
+  const handleBooking = async () => {
+    if (!name || !phone || !venue || !building || !floor || !landmark || !city || !pincode) {
+      Alert.alert("Missing Info", "Please fill all fields including venue and address details.");
       return;
     }
 
-    const bookingDetails = {
-      name,
-      email,
-      venue,
-      date: date.toDateString(),
-      address: { building, floor, street, city, pincode },
+    const bookingData = {
+        name,
+        mobile: phone,
+        date: date.toISOString(),
+        serviceType: venue,
+        address: {
+            mode: "manual",
+            manualAddress: {
+              name: name,
+              mobile: phone,
+              addressLine1: building,
+              addressLine2: floor,
+              landmark: landmark,
+              city: city,
+              pincode: pincode,
+              state: "", // Left empty as it's not in the form
+              country: "India",
+            }
+        }
     };
 
-    console.log("Booking Details:", bookingDetails);
+    setIsLoading(true);
 
-    Alert.alert(
-      "Booking Confirmed ✅",
-      `Your booking for ${venue} on ${date.toDateString()} has been confirmed!\n\n📍 Address: ${building}, Floor ${floor}, ${street}, ${city} - ${pincode}`,
-      [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
-      ]
-    );
+    try {
+      // IMPORTANT: Replace with your actual API endpoint
+      const response = await axios.post('https://your-api-endpoint.com/bookings', bookingData);
+
+      if (response.status === 201 || response.status === 200) {
+        Alert.alert(
+          "Booking Confirmed ✅",
+          `Your booking for ${venue} on ${date.toDateString()} has been confirmed!`,
+          [{ text: "OK", onPress: () => navigation.goBack() }]
+        );
+      } else {
+        Alert.alert("Booking Failed", "Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      console.error("Booking error:", error);
+      Alert.alert("Booking Error", "An error occurred while making the booking. Please check your connection and try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getVenueImage = (item) => {
+    switch (item) {
+      case "Spices": return spicesImg;
+      case "Flour": return flourImg;
+      case "Grinding": return grindingImg;
+      default: return null;
+    }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 20 }}>
-      {/* Back Button */}
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={24} color="#200b0bff" />
-      </TouchableOpacity>
+    <View style={styles.container}>
 
-      <Text style={styles.title}>Venue Booking</Text>
-
-      {/* Name */}
-      <Text style={styles.label}>Name</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your name"
-        placeholderTextColor="#999"
-        value={name}
-        onChangeText={setName}
-      />
-
-      {/* Email */}
-      <Text style={styles.label}>Mobile Number</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your number"
-        placeholderTextColor="#999"
-        keyboardType="number"
-        value={email}
-        onChangeText={setNumber}
-      />
-
-      {/* Date Picker */}
-      <Text style={styles.label}>Select Date</Text>
-      <TouchableOpacity
-        style={styles.dateButton}
-        onPress={() => setShowDatePicker(true)}
-      >
-        <Text style={styles.dateText}>{date.toDateString()}</Text>
-      </TouchableOpacity>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) setDate(selectedDate);
-          }}
-        />
-      )}
-
-      {/* Address Toggle */}
-
-
-      <TouchableOpacity
-        style={styles.toggleBtn}
-        onPress={() => setShowAddress(!showAddress)}
-      >
-        <Text style={styles.toggleText}>
-          {showAddress ? "Hide Address Details" : "Add Address Details"}
-        </Text>
-      </TouchableOpacity>
-
-      {/* Address Fields */}
-      {showAddress && (
-        <>
-          <Text style={styles.label}>Building No / Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter building number/name"
-            value={building}
-            onChangeText={setBuilding}
-          />
-
-          <Text style={styles.label}>Floor</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter floor"
-            value={floor}
-            onChangeText={setFloor}
-          />
-
-
-          <Text style={styles.label}>LandMark</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="LandMark"
-            value={floor}
-            onChangeText={setFloor}
-          />
-
-
-          <Text style={styles.label}>Street / Area</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter street / area"
-            value={street}
-            onChangeText={setStreet}
-          />
-
-          <Text style={styles.label}>City</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter city"
-            value={city}
-            onChangeText={setCity}
-          />
-
-          <Text style={styles.label}>Pincode</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter pincode"
-            keyboardType="numeric"
-            value={pincode}
-            onChangeText={setPincode}
-          />
-        </>
-      )}
-
-      {/* Submit Button */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={handleBooking}>
-          <Text style={styles.buttonText}>Book Now</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={28} color="#333"/>
         </TouchableOpacity>
+        <Text style={styles.headerTitle}>Venue Booking</Text>
+        <View style={{ width: 28 }} /> {/* Placeholder for alignment */}
       </View>
-    </ScrollView>
+
+      <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 20 }}>
+
+        {/* Name Field */}
+        <View style={styles.inputWrapper}>
+          <Ionicons name="person-outline" size={20} color="#555" style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your name"
+            placeholderTextColor="#666"
+            value={name}
+            onChangeText={setName}
+          />
+        </View>
+
+        {/* Mobile Field */}
+        <View style={styles.inputWrapper}>
+          <Ionicons name="call-outline" size={20} color="#555" style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your mobile number"
+            placeholderTextColor="#666"
+            keyboardType="numeric"
+            value={phone}
+            onChangeText={setPhone}
+          />
+        </View>
+
+        {/* Venue Selection */}
+        <Text style={styles.label}>Service Type</Text>
+        <View style={styles.venueContainer}>
+          {["Spices", "Flour", "Grinding"].map((item) => (
+            <TouchableOpacity
+              key={item}
+              style={[styles.venueOption, venue === item && styles.venueSelected]}
+              onPress={() => setVenue(item)}
+            >
+              <Image
+                source={getVenueImage(item)}
+                style={styles.venueImage}
+                resizeMode="contain"
+              />
+              <Text style={[styles.venueText, venue === item && { color: "#fff" }]}>{item}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Date Picker */}
+        <Text style={styles.label}>Select Date</Text>
+        <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+          <Ionicons name="calendar-outline" size={20} color="#555" style={{ marginRight: 8 }} />
+          <Text style={styles.dateText}>{date.toDateString()}</Text>
+        </TouchableOpacity>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display="default"
+            onChange={(event, selectedDate) => {
+              setShowDatePicker(false);
+              if (selectedDate) setDate(selectedDate);
+            }}
+          />
+        )}
+
+        {/* Toggle Address */}
+        <TouchableOpacity style={styles.toggleBtn} onPress={() => setShowAddress(!showAddress)}>
+          <Text style={styles.toggleText}>
+            {showAddress ? "Hide Address Details" : "Add Address Details"}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Address Fields */}
+        {showAddress && (
+          <>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="business-outline" size={20} color="#555" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.input}
+                placeholder="Building No / Name"
+                placeholderTextColor="#666"
+                value={building}
+                onChangeText={setBuilding}
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Ionicons name="layers-outline" size={20} color="#555" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.input}
+                placeholder="Floor"
+                placeholderTextColor="#666"
+                value={floor}
+                onChangeText={setFloor}
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Ionicons name="location-outline" size={20} color="#555" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.input}
+                placeholder="Landmark"
+                placeholderTextColor="#666"
+                value={landmark}
+                onChangeText={setLandmark}
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Ionicons name="location-sharp" size={20} color="#555" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.input}
+                placeholder="City"
+                placeholderTextColor="#666"
+                value={city}
+                onChangeText={setCity}
+              />
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <Ionicons name="mail-outline" size={20} color="#555" style={{ marginRight: 8 }} />
+              <TextInput
+                style={styles.input}
+                placeholder="Pincode"
+                placeholderTextColor="#666"
+                keyboardType="numeric"
+                value={pincode}
+                onChangeText={setPincode}
+              />
+            </View>
+          </>
+        )}
+
+
+        {/* Submit Button */}
+        <TouchableOpacity style={[styles.button, isLoading && styles.buttonDisabled]} onPress={handleBooking} disabled={isLoading}>
+          <Text style={styles.buttonText}>{isLoading ? 'Booking...' : 'Book Now'}</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
 export default VenueBooking;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
-  backButton: {
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#200b0bff',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  label: {
-    marginTop: 15,
-    marginBottom: 5,
-    fontSize: 16,
-    fontWeight: 500,
-    color: '#444',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 12,
-    borderRadius: 8,
-    color: '#585050ff',
-    backgroundColor: '#fff',
-  },
-  dateButton: {
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
+  headerTitle: { fontSize: 22, fontWeight: "700", color: "#111" },
+  inputWrapper: {
+    flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginTop: 15,
     backgroundColor: '#fff',
   },
-  dateText: {
-    fontSize: 16,
-    color: '#333',
+  input: { flex: 1, padding: 10, color: '#585050ff' },
+  label: { fontSize: 16, fontWeight: '600', marginTop: 20, color: '#444' },
+  venueContainer: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 10 },
+  venueOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#555',
+    backgroundColor: '#fff',
   },
+  venueSelected: { backgroundColor: '#2e7d32', borderColor: '#2e7d32' },
+  venueText: { fontSize: 14, color: '#555' },
+  venueImage: { width: 20, height: 20, marginRight: 8 },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    backgroundColor: '#fff',
+    marginTop: 10,
+  },
+  dateText: { fontSize: 16 },
   toggleBtn: {
-    marginTop: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
     padding: 10,
     borderRadius: 8,
     backgroundColor: '#f5f5f5',
-    alignItems: 'center',
+    justifyContent: 'center',
   },
-  toggleText: {
-    color: '#D32F2F',
-    fontWeight: '600',
-    fontSize: 15,
-  },
-  buttonContainer: {
-    marginTop: 30,
-  },
-  button: {
-    backgroundColor: '#D32F2F',
-    paddingVertical: 14,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
+  toggleText: { fontWeight: '600', fontSize: 15, color: '#D32F2F' },
+  button: { backgroundColor: '#2e7d32', paddingVertical: 14, borderRadius: 8, marginTop: 30 },
+  buttonDisabled: { backgroundColor: '#a5d6a7' },
+  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold', textAlign: 'center' },
 });
