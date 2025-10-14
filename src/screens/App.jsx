@@ -12,6 +12,7 @@ import Search from "../components/navbar/Search";
 import Navbar from "../components/navbar/Navbar";
 import Dashboard from "../components/dashboard/Dashboard";
 import Footer from "../components/footer(Tab)/Footer";
+import BookingOrder from "../components/footer(Tab)/Booking/BookingOrder";
 
 // Profile-related screens
 import Orders from "../components/profileDetails/Orders";
@@ -23,7 +24,7 @@ import Notifications from "../components/profileDetails/Notifications";
 import Support from "../components/profileDetails/Support";
 import Login from "../components/Login/login";
 import SignUp from "../components/Login/signup";
-import Booking from "../components/footer(Tab)/Booking";
+import VenueBooking from "../components/footer(Tab)/Booking/Booking";
 import ProductDetails from "../components/product/productDetails";
 import Product from "../components/product/product";
 import Review from "../components/product/review";
@@ -111,11 +112,12 @@ const AppNavigator = () => {
       <Stack.Screen name="Support" component={Support} />
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="SignUp" component={SignUp} />
-      <Stack.Screen name="Booking" component={Booking} />
+      <Stack.Screen name="Booking" component={VenueBooking} />
       <Stack.Screen name="ProductDetails" component={ProductDetails} />
       <Stack.Screen name="Product" component={Product} />
          <Stack.Screen name="Review" component={Review} />
          <Stack.Screen name="orderdone" component={OrderDoneAnimated}/>
+             <Stack.Screen name="BookingOrder" component={BookingOrder}/>
     </Stack.Navigator>
   );
 };

@@ -103,7 +103,7 @@ const Address = () => {
                 <Ionicons
                   name={selected === item.id ? "radio-button-on" : "radio-button-off"}
                   size={24}
-                  color="#860f33ff"
+                  color="#047857"
                   style={{ marginRight: 15 }}
                 />
                 <View style={{ flex: 1 }}>
@@ -185,7 +185,7 @@ const Address = () => {
             key={lbl}
             style={[
               styles.labelOption,
-              form.label === lbl && { backgroundColor: "#860f33ff" },
+              form.label === lbl && { backgroundColor: "#047857" },
             ]}
             onPress={() => handleChange("label", lbl)}
           >
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
   },
   saveBtn: {
-    backgroundColor: "#860f33ff",
+    backgroundColor: "#047857",
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 16,
     right: 16,
-    backgroundColor: "#860f33ff",
+    backgroundColor: "#047857",
     paddingVertical: 16,
     borderRadius: 10,
     alignItems: "center",

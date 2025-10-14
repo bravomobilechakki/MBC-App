@@ -1,20 +1,17 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ActivityIndicator,
-  FlatList,
+  Animated,
+  ScrollView,
   Image,
   TouchableOpacity,
-  Animated,
-  Easing,
   TextInput,
-  Platform,
-  UIManager,
   Keyboard,
   TouchableWithoutFeedback,
-  ScrollView,
+  RefreshControl,
 } from "react-native";
 import axios from "axios";
 import SummaryApi from "../../common";
@@ -23,16 +20,53 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
 
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 const truncate = (text, maxLength) => text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
 
+// ----------------- Animated Cart Item -----------------
+const CartItem = ({ item, selected, toggleSelect, increaseQty, decreaseQty, removeItem, index, navigation }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay: index * 100, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, friction: 8, tension: 80, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={[styles.item, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+      <TouchableOpacity onPress={() => toggleSelect(item._id)}>
+        <Ionicons name={selected ? "checkmark-circle" : "ellipse-outline"} size={26} color={selected ? "#047857" : "#999"} style={{ marginRight: 10 }} />
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => navigation.navigate("ProductDetails", { product: item.product })}>
+        <Image source={item.product.image ? { uri: item.product.image } : { uri: "https://via.placeholder.com/80?text=No+Image" }} style={styles.image} />
+      </TouchableOpacity>
+
+      <View style={styles.info}>
+        <Text style={styles.name}>{truncate(item.product.name, 14)}</Text>
+        <Text style={styles.price}>₹{item.product.price}</Text>
+        <View style={styles.quantityRow}>
+          <TouchableOpacity onPress={() => decreaseQty(item._id)}><Ionicons name="remove-circle-outline" size={22} color="#ff4d4d" /></TouchableOpacity>
+          <Text style={styles.qtyText}>{item.quantity}</Text>
+          <TouchableOpacity onPress={() => increaseQty(item._id)}><Ionicons name="add-circle-outline" size={22} color="#047857" /></TouchableOpacity>
+        </View>
+      </View>
+
+      <TouchableOpacity onPress={() => removeItem(item._id)}>
+        <MaterialCommunityIcons name="delete-outline" size={24} color="#ff4d4d"/>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// ----------------- Main Cart Component -----------------
 const Cart = () => {
   const { token } = useContext(UserContext);
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [showPriceDetails, setShowPriceDetails] = useState(true);
   const [animation] = useState(new Animated.Value(1));
@@ -43,28 +77,24 @@ const Cart = () => {
 
   const fetchCart = async () => {
     try {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-      const response = await axios.get(SummaryApi.getCart.url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      if (!token) { setLoading(false); return; }
+      const response = await axios.get(SummaryApi.getCart.url, { headers: { Authorization: `Bearer ${token}` } });
       if (response.data.success) {
         setCart(response.data.data.items);
         setSelectedItems(response.data.data.items.map(item => item._id));
       }
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); setRefreshing(false); }
   };
 
-  const toggleSelect = (id) => setSelectedItems(prev => prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]);
+  useEffect(() => { fetchCart(); }, [token]);
+
+  const toggleSelect = (id) => setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   const increaseQty = (id) => setCart(prev => prev.map(item => item._id === id ? { ...item, quantity: item.quantity + 1 } : item));
   const decreaseQty = (id) => setCart(prev => prev.map(item => item._id === id && item.quantity > 1 ? { ...item, quantity: item.quantity - 1 } : item));
-  const removeItem = (id) => { setCart(prev => prev.filter(item => item._id !== id)); setSelectedItems(prev => prev.filter(itemId => itemId !== id)); };
+  const removeItem = (id) => { setCart(prev => prev.filter(item => item._id !== id)); setSelectedItems(prev => prev.filter(i => i !== id)); };
+
   const getSubtotal = () => cart.filter(item => selectedItems.includes(item._id)).reduce((total, item) => total + item.product.price * item.quantity, 0);
   const deliveryCharge = 0;
   const getTotal = () => Math.max(getSubtotal() + deliveryCharge - couponDiscount, 0);
@@ -79,15 +109,12 @@ const Cart = () => {
   };
 
   const togglePriceDetails = () => {
-    const toValue = showPriceDetails ? 0 : 1;
-    Animated.timing(animation, { toValue, duration: 300, easing: Easing.ease, useNativeDriver: false }).start();
+    Animated.timing(animation, { toValue: showPriceDetails ? 0 : 1, duration: 300, useNativeDriver: false }).start();
     setShowPriceDetails(!showPriceDetails);
   };
 
   const animatedHeight = animation.interpolate({ inputRange: [0,1], outputRange: [0,200] });
   const animatedOpacity = animation.interpolate({ inputRange: [0,1], outputRange: [0,1] });
-
-  useEffect(() => { fetchCart(); }, [token]);
 
   if (loading) return <ActivityIndicator size="large" style={{ flex: 1, justifyContent: "center" }} />;
 
@@ -103,38 +130,29 @@ const Cart = () => {
           <View style={{ width: 24 }} />
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 120 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchCart(); }} />}
+        >
           {cart.length === 0 ? (
             <Text style={styles.empty}>🛒 Your Cart is Empty</Text>
           ) : (
             <>
-              {cart.map(item => (
-                <View key={item._id} style={styles.item}>
-                  <TouchableOpacity onPress={() => toggleSelect(item._id)}>
-                    <Ionicons name={selectedItems.includes(item._id) ? "checkmark-circle" : "ellipse-outline"} size={26} color={selectedItems.includes(item._id) ? "#047857" : "#999"} style={{ marginRight: 10 }} />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity onPress={() => navigation.navigate("ProductDetails", { product: item.product })}>
-                    <Image source={item.product.image ? { uri: item.product.image } : { uri: "https://via.placeholder.com/80?text=No+Image" }} style={styles.image} />
-                  </TouchableOpacity>
-
-                  <View style={styles.info}>
-                    <Text style={styles.name}>{truncate(item.product.name, 14)}</Text>
-                    <Text style={styles.price}>₹{item.product.price}</Text>
-                    <View style={styles.quantityRow}>
-                      <TouchableOpacity onPress={() => decreaseQty(item._id)}><Ionicons name="remove-circle-outline" size={22} color="#ff4d4d" /></TouchableOpacity>
-                      <Text style={styles.qtyText}>{item.quantity}</Text>
-                      <TouchableOpacity onPress={() => increaseQty(item._id)}><Ionicons name="add-circle-outline" size={22} color="#047857" /></TouchableOpacity>
-                    </View>
-                  </View>
-
-                  <TouchableOpacity onPress={() => removeItem(item._id)}>
-                    <MaterialCommunityIcons name="delete-outline" size={24} color="#ff4d4d"/>
-                  </TouchableOpacity>
-                </View>
+              {cart.map((item, index) => (
+                <CartItem
+                  key={item._id}
+                  item={item}
+                  selected={selectedItems.includes(item._id)}
+                  toggleSelect={toggleSelect}
+                  increaseQty={increaseQty}
+                  decreaseQty={decreaseQty}
+                  removeItem={removeItem}
+                  index={index}
+                  navigation={navigation}
+                />
               ))}
 
-              {/* Footer */}
+              {/* Footer Section */}
               <View style={styles.footer}>
                 <View style={styles.couponContainer}>
                   <Ionicons name="gift-outline" size={20} color="#c5b25f" style={{ marginRight: 6 }} />
@@ -146,7 +164,7 @@ const Cart = () => {
                 {couponMessage ? <Text style={[styles.couponMsg, { color: couponMessage.startsWith("❌") ? "red" : "green" }]}>{couponMessage}</Text> : null}
 
                 <TouchableOpacity style={styles.priceHeader} onPress={togglePriceDetails}>
-                  <Text style={styles.totalTitle}>💰Price Details</Text>
+                  <Text style={styles.totalTitle}>💰 Price Details</Text>
                   <Ionicons name={showPriceDetails ? "chevron-up" : "chevron-down"} size={22} color="#047857" />
                 </TouchableOpacity>
 
@@ -175,56 +193,24 @@ const Cart = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5", paddingHorizontal: 10 },
-
-  // Header
-  header: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    justifyContent: "space-between", 
-    backgroundColor: "#fff", 
-    paddingVertical: 12, 
-    paddingHorizontal: 10, 
-    borderBottomWidth: 1, 
-    borderBottomColor: "#eee", 
-    marginBottom: 8 
-  },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#fff", paddingVertical: 12, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: "#eee", marginBottom: 8 },
   headerTitle: { fontSize: 20, fontWeight: "700", color: "#111" },
-
-  // Empty Cart
   empty: { fontSize: 16, fontWeight: "500", textAlign: "center", marginTop: 40, color: "#777" },
-
-  // Cart Item
-  item: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    backgroundColor: "#fff", 
-    padding: 12, 
-    marginVertical: 6, 
-    borderRadius: 12, 
-    shadowColor: "#000", 
-    shadowOpacity: 0.05, 
-    shadowOffset: { width: 0, height: 2 }, 
-    shadowRadius: 4, 
-    elevation: 3 
-  },
+  item: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", padding: 12, marginVertical: 6, borderRadius: 12, shadowColor: "#000", shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4, elevation: 3 },
   image: { width: 80, height: 80, borderRadius: 10, marginRight: 12, backgroundColor: "#f0f0f0" },
   info: { flex: 1 },
   name: { fontSize: 14, fontWeight: "600", color: "#222", marginBottom: 4 },
   price: { fontSize: 14, fontWeight: "700", color: "#2e7d32", marginBottom: 4 },
   quantityRow: { flexDirection: "row", alignItems: "center", marginTop: 4 },
   qtyText: { fontSize: 14, fontWeight: "600", color: "#222", minWidth: 24, textAlign: "center" },
-
-  // Footer / Price Details
   footer: { padding: 14, borderTopWidth: 1, borderColor: "#eee", backgroundColor: "#fff", borderRadius: 12, marginTop: 10 },
   couponContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff8e1", borderRadius: 8, paddingHorizontal: 10, marginBottom: 10 },
   couponInput: { flex: 1, height: 40, fontSize: 14, color: "#333" },
   applyBtn: { backgroundColor: "#c5b25f", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
   applyText: { color: "#fff", fontWeight: "600", fontSize: 13 },
   couponMsg: { marginBottom: 8, fontSize: 13, fontWeight: "500" },
-
   priceHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   totalTitle: { fontSize: 16, fontWeight: "700", color: "#222" },
-
   priceDetailsContainer: { backgroundColor: "#fff", padding: 12, borderRadius: 12, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 4, elevation: 3 },
   priceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginVertical: 4 },
   grandTotalRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: "#ddd" },
@@ -233,10 +219,9 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, color: "#555", flex: 1 },
   value: { fontSize: 14, fontWeight: "600", color: "#222" },
   divider: { height: 1, backgroundColor: "#ddd", marginVertical: 6 },
-
-  // Checkout Button
   checkoutBtn: { flexDirection: "row", justifyContent: "center", alignItems: "center", backgroundColor: "#2e7d32", paddingVertical: 14, borderRadius: 12, marginTop: 8 },
   checkoutText: { color: "#fff", fontSize: 16, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 },
 });
 
 export default Cart;
+

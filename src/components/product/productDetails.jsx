@@ -29,11 +29,11 @@ const ProductDetailsPro = () => {
 
   const [quantity, setQuantity] = useState(1);
   const [wishlisted, setWishlisted] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [adding, setAdding] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0); // ← fixed
 
   const increase = () => setQuantity((q) => q + 1);
-  const decrease = () => setQuantity((q) => (q > 1 ? q - 1 : q));
+  const decrease = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
   const sellingPrice = useMemo(() => product.sellingPrice ?? 0, [product]);
   const originalPrice = useMemo(() => product.originalPrice ?? product.mrp ?? 0, [product]);
@@ -192,7 +192,7 @@ const ProductDetailsPro = () => {
 
           <TouchableOpacity style={styles.deliveryRow}>
             <Ionicons name="location-outline" size={18} color="#444" />
-            <Text style={styles.deliveryText}>Deliver to: <Text style={{ fontWeight: "700" }}>Your city 560001</Text></Text>
+            <Text style={styles.deliveryText}>Deliver to: <Text style={{ fontWeight: "700" }}>Your city 302012</Text></Text>
             <Ionicons name="chevron-forward" size={18} color="#999" />
           </TouchableOpacity>
 
@@ -200,11 +200,11 @@ const ProductDetailsPro = () => {
             <Text style={styles.offersTitle}>Available offers</Text>
             <View style={styles.offerItem}>
               <Ionicons name="pricetag-outline" size={16} color="#A98C43" />
-              <Text style={styles.offerText}>Bank Offer: 10% off on XYZ Bank cards</Text>
+              <Text style={styles.offerText}>Bank Offer: 5% off on HDFC Bank cards</Text>
             </View>
             <View style={styles.offerItem}>
               <Ionicons name="pricetag-outline" size={16} color="#A98C43" />
-              <Text style={styles.offerText}>Flat ₹100 off on orders above ₹999</Text>
+              <Text style={styles.offerText}>Flat ₹50 off on orders above ₹1999</Text>
             </View>
           </View>
 
