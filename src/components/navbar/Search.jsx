@@ -16,7 +16,7 @@ const Search = () => {
       <View style={styles.searchBar}>
         {/* ✅ Logo inside search bar */}
         <Image
-          source={require("../../images/logo2.png")} // path relative to Search.js
+          source={require("../../images/logo2.png")} 
           style={styles.logo}
           resizeMode="contain"
         />

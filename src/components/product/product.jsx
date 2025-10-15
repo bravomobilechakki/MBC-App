@@ -25,11 +25,13 @@ const Product = () => {
   const route = useRoute();
   const fromFooter = route.params?.fromFooter;
   const { token } = useContext(UserContext);
-  const [quantities, setQuantities] = useState({});
+
   const [products, setProducts] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // ----------------- Fetch Products & Wishlist -----------------
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -37,42 +39,78 @@ const Product = () => {
           method: SummaryApi.getProducts.method.toUpperCase(),
         });
         const result = await response.json();
-        if (result.success) {
-          setProducts(result.data.products);
-        } else {
-          setError(result.message || 'Failed to fetch products');
-        }
-      } catch (error) {
+        if (result.success) setProducts(result.data.products);
+        else setError(result.message || 'Failed to fetch products');
+      } catch (err) {
+        console.error(err);
         setError('Something went wrong');
-        console.error(error);
       } finally {
         setLoading(false);
       }
     };
-    fetchProducts();
-  }, []);
 
+    const fetchWishlist = async () => {
+      if (!token) return;
+      try {
+        const response = await fetch(SummaryApi.getWishlist.url, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const result = await response.json();
+        if (result.wishlist) setWishlist(result.wishlist.map(i => i.productId._id));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchProducts();
+    fetchWishlist();
+  }, [token]);
+
+  // ----------------- Toggle Wishlist (Silent) -----------------
+  const toggleWishlist = async (productId) => {
+    if (!token) {
+      console.warn('Please login to manage wishlist.');
+      return;
+    }
+
+    const isWishlisted = wishlist.includes(productId);
+
+    try {
+      const url = isWishlisted
+        ? SummaryApi.removeFromWishlist.url
+        : SummaryApi.addToWishlist.url;
+      const method = isWishlisted ? 'DELETE' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ productId }),
+      });
+
+      const result = await response.json();
+      if (result.message) {
+        console.log(result.message);
+        setWishlist((prev) =>
+          isWishlisted ? prev.filter((id) => id !== productId) : [...prev, productId]
+        );
+      }
+    } catch (err) {
+      console.error('Wishlist update failed:', err);
+    }
+  };
+
+  // ----------------- Cart & Product Details -----------------
   const handleProductPress = (product) => {
     navigation.navigate('ProductDetails', { product });
   };
 
-  const increaseQuantity = (id) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: (prev[id] || 1) + 1,
-    }));
-  };
-
-  const decreaseQuantity = (id) => {
-    setQuantities((prev) => ({
-      ...prev,
-      [id]: prev[id] > 1 ? prev[id] - 1 : 1,
-    }));
-  };
-
   const handleAddToCart = async (product) => {
     if (!token) {
-      Alert.alert('Error', 'Please login to add items to your cart.');
+      Alert.alert('Login Required', 'Please login to add items to cart.');
       return;
     }
     try {
@@ -82,63 +120,46 @@ const Product = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          productId: product._id,
-          quantity: quantities[product._id] || 1,
-        }),
+        body: JSON.stringify({ productId: product._id, quantity: 1 }),
       });
       const result = await response.json();
-      if (result.success) {
-        Alert.alert('Success', 'Product added to cart successfully!');
-      } else {
-        Alert.alert('Error', result.message || 'Failed to add product to cart.');
-      }
-    } catch (error) {
+      Alert.alert(result.success ? 'Success' : 'Error', result.message);
+    } catch (err) {
+      console.error(err);
       Alert.alert('Error', 'Something went wrong.');
-      console.error(error);
     }
   };
 
-  const handleBuyNow = (product) => {
-    console.log('Buy Now:', product.name);
-  };
+  // ----------------- Render Product Card -----------------
+  const renderItem = ({ item }) => {
+    const isWishlisted = wishlist.includes(item._id);
+    return (
+      <View style={styles.productCard}>
+        <TouchableOpacity onPress={() => handleProductPress(item)} style={{ flexShrink: 1 }}>
+          <Image source={{ uri: item.images[0] }} style={styles.image} />
+          <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
+          <Text style={styles.price}>{`₹${item.sellingPrice}`}</Text>
+        </TouchableOpacity>
 
-  const renderItem = ({ item }) => (
-    <View style={styles.productCard}>
-      <TouchableOpacity onPress={() => handleProductPress(item)} style={{ flexShrink: 1 }}>
-        <Image source={{ uri: item.images[0] }} style={styles.image} />
-        <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
-          {item.name}
-        </Text>
-        <Text style={styles.price}>{`₹${item.sellingPrice}`}</Text>
-        <View style={styles.ratingContainer}>
-          <Ionicons name="star" size={16} color="#FFD700" />
-          <Text style={styles.ratingText}>{item.rating || 'N/A'}</Text>
+        <TouchableOpacity onPress={() => toggleWishlist(item._id)} style={styles.wishlistIcon}>
+          <Ionicons
+            name={isWishlisted ? 'heart' : 'heart-outline'}
+            size={20}
+            color={isWishlisted ? '#FF6F61' : '#555'}
+          />
+        </TouchableOpacity>
+
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity style={styles.cartBtn} onPress={() => handleAddToCart(item)}>
+            <Ionicons name="cart-outline" size={18} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.buyBtn}>
+            <Text style={styles.buyBtnText}>Buy</Text>
+          </TouchableOpacity>
         </View>
-      </TouchableOpacity>
-
-      {/* Quantity Selector */}
-      {/* <View style={styles.quantityContainer}>
-        <TouchableOpacity onPress={() => decreaseQuantity(item._id)} style={styles.qtyBtn}>
-          <Ionicons name="remove" size={16} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.quantityText}>{quantities[item._id] || 1}</Text>
-        <TouchableOpacity onPress={() => increaseQuantity(item._id)} style={styles.qtyBtn}>
-          <Ionicons name="add" size={16} color="#fff" />
-        </TouchableOpacity>
-      </View> */}
-
-      {/* Action Buttons */}
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity style={styles.cartBtn} onPress={() => handleAddToCart(item)}>
-          <Ionicons name="cart-outline" size={18} color="#fff" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.buyBtn} onPress={() => handleBuyNow(item)}>
-          <Text style={styles.buyBtnText}>Buy</Text>
-        </TouchableOpacity>
       </View>
-    </View>
-  );
+    );
+  };
 
   if (loading)
     return <ActivityIndicator size="large" color="#0000ff" style={{ flex: 1, justifyContent: 'center' }} />;
@@ -197,10 +218,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.2,
     borderColor: '#eee',
     marginBottom: 8,
-    // Subtle gradient shadow effect
-    backgroundColor: '#fefefe',
   },
-
   image: {
     width: '100%',
     height: IMAGE_HEIGHT,
@@ -208,34 +226,10 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
     backgroundColor: '#f7f7f7',
   },
-
   name: { fontSize: 13, fontWeight: '600', marginVertical: 4, color: '#333' },
   price: { fontSize: 13, fontWeight: 'bold', color: '#2e7d32' },
 
-  ratingContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  ratingText: { marginLeft: 4, fontSize: 10, color: '#555' },
-
-  quantityContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 6,
-    alignItems: 'center',
-  },
-  qtyBtn: {
-    width: 26,
-    height: 26,
-    backgroundColor: '#A98C43',
-    borderRadius: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quantityText: {
-    marginHorizontal: 6,
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-    minWidth: 22,
-  },
+  wishlistIcon: { position: 'absolute', top: 10, right: 10 },
 
   actionsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   cartBtn: {

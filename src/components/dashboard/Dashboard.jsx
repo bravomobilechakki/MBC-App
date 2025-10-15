@@ -1,40 +1,70 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from "react-native";
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  Image, 
+  ActivityIndicator, 
+  RefreshControl 
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import SummaryApi from "../../common";
 
 const Dashboard = () => {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Function to fetch all dashboard data
+  const loadDashboard = async () => {
+    setLoadingCategories(true);
+
+    try {
+      const response = await fetch(SummaryApi.getCategorys.url, {
+        method: SummaryApi.getCategorys.method,
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch categories");
+
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        setCategories(data.data);
+      } else {
+        setCategories([]);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoadingCategories(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch(SummaryApi.getCategorys.url, {
-          method: SummaryApi.getCategorys.method,
-          headers: { "Content-Type": "application/json" },
-        });
-        // console.log(response,"iuuyhjk");
-
-        if (!response.ok) throw new Error("Failed to fetch categories");
-
-        const data = await response.json();
-        console.log("Categories API Response:", data);
-
-        if (data.success && Array.isArray(data.data)) {
-          setCategories(data.data);
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
-
-    fetchCategories();
+    loadDashboard();
   }, []);
 
+  // Pull-to-refresh handler
+  const onRefresh = () => {
+    setRefreshing(true);
+    // Reset state if needed
+    setCategories([]);
+    loadDashboard();
+  };
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl 
+          refreshing={refreshing} 
+          onRefresh={onRefresh} 
+          colors={['#007bff']} 
+        />
+      }
+    >
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerText}>All Featured</Text>
