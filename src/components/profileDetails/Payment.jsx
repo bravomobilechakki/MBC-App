@@ -16,32 +16,32 @@ import { UserContext } from "../../context/UserContext";
 const Payment = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { token } = useContext(UserContext);
+  const { token, user } = useContext(UserContext);
   const { selectedItems, totalAmount, address } = route.params;
 
   const [selectedPayment, setSelectedPayment] = useState("COD"); // Default COD
 
   const handlePlaceOrder = async () => {
     try {
-      if (!token) {
+      if (!token || !user) {
         Alert.alert("Login Required", "Please login before placing an order.");
         return;
       }
 
       const orderPayload = {
-        user: token,
+        user: user._id, // Use user._id instead of token
         orderItems: selectedItems.map((item) => ({
-          product: item._id,
-          name: item.name,
+          product: item.product._id,
+          name: item.product.name,
           quantity: item.quantity,
-          price: item.price,
-          image: item.image,
+          price: item.product.price,
+          image: item.product.images[0],
         })),
         shippingAddress: {
           street: address?.street,
           city: address?.city,
           state: address?.state,
-          zipCode: address?.pincode,
+          zipCode: address?.zipCode,
           country: "India",
           isDefault: true,
         },
@@ -73,9 +73,10 @@ const Payment = () => {
       }
     } catch (error) {
       console.error("❌ Error creating order:", error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || error.message || "Something went wrong while placing the order.";
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Something went wrong while placing the order."
+        errorMessage
       );
     }
   };

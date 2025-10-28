@@ -224,7 +224,7 @@ const Cart = () => {
 
   const getSubtotal = () =>
     cart
-      .filter((item) => selectedItems.includes(item._id))
+      .filter((item) => selectedItems.includes(item._id) && item.product)
       .reduce((total, item) => total + item.product.price * item.quantity, 0);
 
   const deliveryCharge = 0;
@@ -295,17 +295,19 @@ const Cart = () => {
           ) : (
             <>
               {cart.map((item, index) => (
-                <CartItem
-                  key={item._id}
-                  item={item}
-                  selected={selectedItems.includes(item._id)}
-                  toggleSelect={toggleSelect}
-                  increaseQty={increaseQty}
-                  decreaseQty={decreaseQty}
-                  removeItem={removeItem}
-                  index={index}
-                  navigation={navigation}
-                />
+                item.product && (
+                  <CartItem
+                    key={item._id}
+                    item={item}
+                    selected={selectedItems.includes(item._id)}
+                    toggleSelect={toggleSelect}
+                    increaseQty={increaseQty}
+                    decreaseQty={decreaseQty}
+                    removeItem={removeItem}
+                    index={index}
+                    navigation={navigation}
+                  />
+                )
               ))}
 
               {/* Footer Section */}
@@ -383,7 +385,7 @@ const Cart = () => {
                   disabled={selectedItems.length === 0}
                   onPress={() =>
                     navigation.navigate("Address", {
-                      selectedItems: cart.filter((i) => selectedItems.includes(i._id)),
+                      selectedItems: cart.filter((i) => selectedItems.includes(i._id) && i.product),
                       totalAmount: getTotal(),
                     })
                   }

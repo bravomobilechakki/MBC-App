@@ -1,4 +1,4 @@
-  import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Profile = () => {
   const navigation = useNavigation();
-  const { user, setUser, setToken } = useContext(UserContext);
+  const { user, setUser, setToken, fetchUserProfile } = useContext(UserContext);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
   const handleLogout = async () => {
     setUser(null);

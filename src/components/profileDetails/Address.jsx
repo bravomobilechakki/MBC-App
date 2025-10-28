@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,83 +10,94 @@ import {
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { UserContext } from "../../context/UserContext";
+import SummaryApi from "../../common";
+import axios from "axios";
 
 const Address = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { selectedItems, totalAmount } = route.params || {};
+  const { user, token, fetchUserProfile } = useContext(UserContext);
+
   const [mode, setMode] = useState("list");
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      label: "Home",
-      name: "Monika Rathore",
-      phone: "+91 9876543210",
-      house: "123",
-      street: "Green Street",
-      landmark: "Near Metro Station",
-      city: "New Delhi",
-      pincode: "110001",
-      state: "Delhi",
-    },
-  ]);
-  const [selected, setSelected] = useState(addresses.length > 0 ? addresses[0].id : null);
-
+  const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({
-    label: "",
-    customLabel: "",
-    name: "",
-    phone: "",
-    house: "",                                                
     street: "",
-    landmark: "",
     city: "",
-    pincode: "",
     state: "",
+    zipCode: "",
+    country: "India",
+    isDefault: false,
   });
+
+  useEffect(() => {
+    if (user?.addresses) {
+      const defaultAddress = user.addresses.find((addr) => addr.isDefault);
+      if (defaultAddress) {
+        setSelected(defaultAddress._id);
+      } else if (user.addresses.length > 0) {
+        setSelected(user.addresses[0]._id);
+      }
+    }
+  }, [user]);
 
   const handleChange = (key, value) => setForm({ ...form, [key]: value });
 
-  const handleSave = () => {
-    const finalLabel =
-      form.label === "Other" && form.customLabel
-        ? form.customLabel
-        : form.label;
+  const handleSave = async () => {
+    try {
+      let response;
+      if (mode === "add") {
+        response = await axios.post(SummaryApi.addAddress.url, form, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else if (mode === "edit" && selected) {
+        response = await axios.put(
+          SummaryApi.updateAddress(selected).url,
+          form,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      }
 
-    const newForm = { ...form, label: finalLabel };
-
-    if (mode === "add") {
-      const newAddress = { ...newForm, id: Date.now() };
-      setAddresses([...addresses, newAddress]);
-    } else if (mode === "edit" && selected) {
-      setAddresses(
-        addresses.map((addr) =>
-          addr.id === selected ? { ...newForm, id: addr.id } : addr
-        )
-      );
+      if (response.data.success) {
+        await fetchUserProfile();
+        setMode("list");
+      } else {
+        Alert.alert("Error", response.data.message || "Failed to save address.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Something went wrong while saving the address.");
+      console.error(error);
     }
-
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-      setMode("list");
-    }, 1500);
   };
 
   const handleEdit = (addr) => {
-    setForm({ ...addr, customLabel: "" });
-    setSelected(addr.id);
+    setForm(addr);
+    setSelected(addr._id);
     setMode("edit");
   };
 
-  const handleDelete = (id) => {
-    setAddresses(addresses.filter((addr) => addr.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      const response = await axios.delete(SummaryApi.deleteAddress(id).url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.data.success) {
+        await fetchUserProfile();
+      } else {
+        Alert.alert("Error", response.data.message || "Failed to delete address.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Something went wrong while deleting the address.");
+      console.error(error);
+    }
   };
 
   if (mode === "list") {
-    const selectedAddress = addresses.find(addr => addr.id === selected);
+    const selectedAddress = user?.addresses.find((addr) => addr._id === selected);
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -97,24 +108,24 @@ const Address = () => {
         </View>
 
         <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-          {addresses.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.card} onPress={() => setSelected(item.id)}>
+          {user?.addresses?.map((item) => (
+            <TouchableOpacity
+              key={item._id}
+              style={styles.card}
+              onPress={() => setSelected(item._id)}
+            >
               <View style={styles.row}>
                 <Ionicons
-                  name={selected === item.id ? "radio-button-on" : "radio-button-off"}
+                  name={selected === item._id ? "radio-button-on" : "radio-button-off"}
                   size={24}
                   color="#047857"
                   style={{ marginRight: 15 }}
                 />
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>{item.label}</Text>
+                  <Text style={styles.label}>{item.street}</Text>
                   <Text style={styles.details}>
-                    {item.house}, {item.street}, {item.landmark}
+                    {item.city} - {item.zipCode}, {item.state}
                   </Text>
-                  <Text style={styles.details}>
-                    {item.city} - {item.pincode}, {item.state}
-                  </Text>
-                  <Text style={styles.phone}>{item.phone}</Text>
                 </View>
               </View>
 
@@ -128,7 +139,7 @@ const Address = () => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.actionBtn}
-                  onPress={() => handleDelete(item.id)}
+                  onPress={() => handleDelete(item._id)}
                 >
                   <Ionicons name="trash-outline" size={18} color="red" />
                   <Text style={[styles.actionText, { color: "red" }]}>
@@ -141,25 +152,41 @@ const Address = () => {
 
           <TouchableOpacity
             style={styles.addBtn}
-            onPress={() => setMode("add")}
+            onPress={() => {
+              setForm({
+                street: "",
+                city: "",
+                state: "",
+                zipCode: "",
+                country: "India",
+                isDefault: false,
+              });
+              setMode("add");
+            }}
           >
             <Ionicons name="add-circle-outline" size={22} color="#fff" />
             <Text style={styles.addText}>Add New Address</Text>
           </TouchableOpacity>
         </ScrollView>
 
-        <TouchableOpacity
-          style={styles.paymentBtn}
-          onPress={() => {
-            if (!selectedAddress) {
-              Alert.alert("Please select an address.");
-              return;
-            }
-            navigation.navigate("Payment", { selectedItems, totalAmount, address: selectedAddress });
-          }}
-        >
-          <Text style={styles.paymentText}>Proceed to Payment</Text>
-        </TouchableOpacity>
+        {selectedItems && (
+          <TouchableOpacity
+            style={styles.paymentBtn}
+            onPress={() => {
+              if (!selectedAddress) {
+                Alert.alert("Please select an address.");
+                return;
+              }
+              navigation.navigate("Payment", {
+                selectedItems,
+                totalAmount,
+                address: selectedAddress,
+              });
+            }}
+          >
+            <Text style={styles.paymentText}>Proceed to Payment</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
@@ -178,77 +205,13 @@ const Address = () => {
         </Text>
       </View>
 
-      <Text style={styles.sectionTitle}>Address Label</Text>
-      <View style={styles.labelRow}>
-        {["Home", "Work", "Other"].map((lbl) => (
-          <TouchableOpacity
-            key={lbl}
-            style={[
-              styles.labelOption,
-              form.label === lbl && { backgroundColor: "#047857" },
-            ]}
-            onPress={() => handleChange("label", lbl)}
-          >
-            <Text
-              style={[
-                styles.labelText,
-                form.label === lbl && { color: "#fff" },
-              ]}
-            >
-              {lbl}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {form.label === "Other" && (
-        <TextInput
-          placeholder="Enter Custom Label"
-          placeholderTextColor="#888"
-          style={styles.input}
-          value={form.customLabel}
-          onChangeText={(val) => handleChange("customLabel", val)}
-        />
-      )}
-
-      <Text style={styles.sectionTitle}>Contact Info</Text>
-      <TextInput
-        placeholder="Full Name"
-        placeholderTextColor="#888"
-        style={styles.input}
-        value={form.name}
-        onChangeText={(val) => handleChange("name", val)}
-      />
-      <TextInput
-        placeholder="Phone Number"
-        placeholderTextColor="#888"
-        style={styles.input}
-        keyboardType="phone-pad"
-        value={form.phone}
-        onChangeText={(val) => handleChange("phone", val)}
-      />
-
       <Text style={styles.sectionTitle}>Address Info</Text>
-      <TextInput
-        placeholder="House / Flat / Building No."
-        placeholderTextColor="#888"
-        style={styles.input}
-        value={form.house}
-        onChangeText={(val) => handleChange("house", val)}
-      />
       <TextInput
         placeholder="Street / Area"
         placeholderTextColor="#888"
         style={styles.input}
         value={form.street}
         onChangeText={(val) => handleChange("street", val)}
-      />
-      <TextInput
-        placeholder="Landmark"
-        placeholderTextColor="#888"
-        style={styles.input}
-        value={form.landmark}
-        onChangeText={(val) => handleChange("landmark", val)}
       />
       <TextInput
         placeholder="City"
@@ -258,20 +221,33 @@ const Address = () => {
         onChangeText={(val) => handleChange("city", val)}
       />
       <TextInput
-        placeholder="Pincode"
-        placeholderTextColor="#888"
-        style={styles.input}
-        keyboardType="numeric"
-        value={form.pincode}
-        onChangeText={(val) => handleChange("pincode", val)}
-      />
-      <TextInput
         placeholder="State"
         placeholderTextColor="#888"
         style={styles.input}
         value={form.state}
         onChangeText={(val) => handleChange("state", val)}
       />
+      <TextInput
+        placeholder="Pincode"
+        placeholderTextColor="#888"
+        style={styles.input}
+        keyboardType="numeric"
+        value={form.zipCode}
+        onChangeText={(val) => handleChange("zipCode", val)}
+      />
+      <TextInput
+        placeholder="Country"
+        placeholderTextColor="#888"
+        style={styles.input}
+        value={form.country}
+        onChangeText={(val) => handleChange("country", val)}
+      />
+      <View style={styles.defaultRow}>
+        <Text>Set as default</Text>
+        <TouchableOpacity onPress={() => setForm(prev => ({...prev, isDefault: !prev.isDefault}))}>
+            <Ionicons name={form.isDefault ? "checkbox" : "square-outline"} size={24} color="#047857" />
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
         <Text style={styles.saveText}>
@@ -323,17 +299,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: "#333",
   },
-  labelRow: { flexDirection: "row", marginBottom: 16 },
-  labelOption: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginRight: 10,
-    backgroundColor: "#fff",
-  },
-  labelText: { fontSize: 14, color: "#181313ff" },
   input: {
     backgroundColor: "#fff",
     borderRadius: 10,
@@ -368,4 +333,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  defaultRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  }
 });

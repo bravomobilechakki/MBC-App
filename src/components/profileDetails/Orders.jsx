@@ -63,17 +63,13 @@ const Orders = () => {
     <View style={styles.card}>
       {/* Product Image */}
       <Image
-        source={
-          item.items[0]?.product.images[0]
-            ? { uri: item.items[0].product.images[0] }
-            : require("../../images/facebook.png")
-        }
+        source={ item.orderItems[0]?.image ? { uri: item.orderItems[0].image } : { uri: "https://via.placeholder.com/80?text=No+Image" }}
         style={styles.image}
       />
 
       {/* Product Info */}
       <View style={styles.info}>
-        <Text style={styles.product}>{item.items[0]?.product.name || 'Order'}</Text>
+        <Text style={styles.product}>{item.orderItems[0]?.name || 'Order'}</Text>
         <Text style={styles.date}>Ordered on {new Date(item.createdAt).toLocaleDateString()}</Text>
         <Text style={styles.amount}>₹{item.totalAmount}</Text>
 

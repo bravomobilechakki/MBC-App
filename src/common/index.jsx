@@ -5,6 +5,11 @@ const SummaryApi = {
   signUP: { url: `${backendDomain}/api/signup`, method: "post" },
   logIn: { url: `${backendDomain}/api/login`, method: "post" },
   verifyOTP: { url: `${backendDomain}/api/VerifyOTP`, method: "post" },
+  getUserProfile: { url: `${backendDomain}/api/user`, method: "get" },
+  updateUserProfile: { url: `${backendDomain}/api/user/profile`, method: "put" },
+  addAddress: { url: `${backendDomain}/api/user/profile/address`, method: "post" },
+  updateAddress: (addressId) => ({ url: `${backendDomain}/api/user/profile/address/${addressId}`, method: "put" }),
+  deleteAddress: (addressId) => ({ url: `${backendDomain}/api/user/profile/address/${addressId}`, method: "delete" }),
 
   // Products & Categories
   getProducts: { url: `${backendDomain}/api/products`, method: "get" },
