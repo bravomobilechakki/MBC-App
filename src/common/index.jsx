@@ -25,6 +25,7 @@ const SummaryApi = {
   // Orders
   createOrder: { url: `${backendDomain}/api/orders`, method: "post" },
   getOrders: { url: `${backendDomain}/api/orders`, method: "get" },
+  getOrderDetails: { url: `${backendDomain}/api/orders`, method: "get" },
 
   // Reviews
   addReview: { url: `${backendDomain}/api/reviews/:id`, method: "post" },

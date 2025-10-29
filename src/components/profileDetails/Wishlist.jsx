@@ -57,7 +57,7 @@ const Wishlist = () => {
         data: { productId },
       });
       if (data.success !== false) {
-        setWishlist((prev) => prev.filter((item) => item.productId._id !== productId));
+        setWishlist((prev) => prev.filter((item) => item.productId && item.productId._id !== productId));
         Alert.alert("Removed", data.message || "");
       }
     } catch (error) {
@@ -89,34 +89,53 @@ const Wishlist = () => {
     navigation.navigate("ProductDetails", { product: item.productId });
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <TouchableOpacity onPress={() => handleNavigate(item)}>
-        <Image source={{ uri: item.productId.images[0] }} style={styles.image} />
-      </TouchableOpacity>
-      <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={2}>
-          {item.productId.name}
-        </Text>
-        <Text style={styles.price}>₹{item.productId.sellingPrice}</Text>
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.cartBtn}
-            onPress={() => handleAddToCart(item.productId)}
-          >
-            <Ionicons name="cart-outline" size={16} color="#fff" />
-            <Text style={styles.cartText}>Add</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.wishlistBtn}
-            onPress={() => handleRemove(item.productId._id)}
-          >
-            <Ionicons name="heart" size={18} color="#FF6F61" />
-          </TouchableOpacity>
+  const renderItem = ({ item }) => {
+    const product = item.productId;
+
+    if (!product) {
+      return (
+        <View style={styles.card}>
+          <View style={styles.info}>
+            <Text style={styles.name}>Product not available</Text>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.card}>
+        <TouchableOpacity onPress={() => handleNavigate(item)}>
+          <Image
+            source={{
+              uri: product.images?.[0] || "https://via.placeholder.com/150?text=No+Image",
+            }}
+            style={styles.image}
+          />
+        </TouchableOpacity>
+        <View style={styles.info}>
+          <Text style={styles.name} numberOfLines={2}>
+            {product.name}
+          </Text>
+          <Text style={styles.price}>₹{product.sellingPrice}</Text>
+          <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.cartBtn}
+              onPress={() => handleAddToCart(product)}
+            >
+              <Ionicons name="cart-outline" size={16} color="#fff" />
+              <Text style={styles.cartText}>Add</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.wishlistBtn}
+              onPress={() => handleRemove(product._id)}
+            >
+              <Ionicons name="heart" size={18} color="#FF6F61" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   if (loading)
     return <ActivityIndicator size="large" color="#0000ff" style={{ flex: 1, justifyContent: "center" }} />;
