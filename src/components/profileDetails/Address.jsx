@@ -7,6 +7,8 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -30,20 +32,31 @@ const Address = () => {
     country: "India",
     isDefault: false,
   });
+  const [loading, setLoading] = useState(false);
 
+  // 🔄 Fetch profile on mount
+  useEffect(() => {
+    refreshProfile();
+  }, []);
+
+  // 🏠 Set default selected address
   useEffect(() => {
     if (user?.addresses) {
-      const defaultAddress = user.addresses.find((addr) => addr.isDefault);
-      if (defaultAddress) {
-        setSelected(defaultAddress._id);
-      } else if (user.addresses.length > 0) {
-        setSelected(user.addresses[0]._id);
-      }
+      const defaultAddress = user.addresses.find((a) => a.isDefault);
+      if (defaultAddress) setSelected(defaultAddress._id);
+      else if (user.addresses.length > 0) setSelected(user.addresses[0]._id);
     }
   }, [user]);
 
+  const refreshProfile = async () => {
+    setLoading(true);
+    await fetchUserProfile();
+    setLoading(false);
+  };
+
   const handleChange = (key, value) => setForm({ ...form, [key]: value });
 
+  // ✅ Save or update address
   const handleSave = async () => {
     try {
       let response;
@@ -52,52 +65,90 @@ const Address = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
       } else if (mode === "edit" && selected) {
-        response = await axios.put(
-          SummaryApi.updateAddress(selected).url,
-          form,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        response = await axios.put(SummaryApi.updateAddress(selected).url, form, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
 
-      if (response.data.success) {
+      const success =
+        response?.data?.success ||
+        response?.status === 200 ||
+        response?.status === 201;
+
+      if (success) {
         await fetchUserProfile();
-        setMode("list");
+
+        // 🕒 Give React time to update context
+        setTimeout(() => {
+          if (user?.addresses?.length) {
+            const latest = user.addresses[user.addresses.length - 1];
+            setSelected(latest._id);
+          }
+          setMode("list");
+        }, 300);
+
+        Alert.alert("Success", response.data.message || "Address saved successfully!");
       } else {
         Alert.alert("Error", response.data.message || "Failed to save address.");
       }
     } catch (error) {
-      Alert.alert("Error", "Something went wrong while saving the address.");
       console.error(error);
+      Alert.alert("Error", "Something went wrong while saving the address.");
     }
   };
 
+  // ✏️ Edit address
   const handleEdit = (addr) => {
     setForm(addr);
     setSelected(addr._id);
     setMode("edit");
   };
 
-  const handleDelete = async (id) => {
-    try {
-      const response = await axios.delete(SummaryApi.deleteAddress(id).url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  // ❌ Delete address
+  const handleDelete = (id) => {
+    Alert.alert("Delete Address", "Are you sure you want to delete this address?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const response = await axios.delete(SummaryApi.deleteAddress(id).url, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
 
-      if (response.data.success) {
-        await fetchUserProfile();
-      } else {
-        Alert.alert("Error", response.data.message || "Failed to delete address.");
-      }
-    } catch (error) {
-      Alert.alert("Error", "Something went wrong while deleting the address.");
-      console.error(error);
-    }
+            const success =
+              response?.data?.success ||
+              response?.status === 200 ||
+              response?.status === 201;
+
+            if (success) {
+              await fetchUserProfile();
+              Alert.alert("Deleted", response.data.message || "Address deleted successfully!");
+            } else {
+              Alert.alert("Error", response.data.message || "Failed to delete address.");
+            }
+          } catch (error) {
+            console.error(error);
+            Alert.alert("Error", "Something went wrong while deleting the address.");
+          }
+        },
+      },
+    ]);
   };
 
+  // 🌀 Loader
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#047857" />
+      </View>
+    );
+  }
+
+  // 📜 List Screen
   if (mode === "list") {
-    const selectedAddress = user?.addresses.find((addr) => addr._id === selected);
+    const selectedAddress = user?.addresses?.find((addr) => addr._id === selected);
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -107,48 +158,58 @@ const Address = () => {
           <Text style={styles.headerTitle}>My Addresses</Text>
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-          {user?.addresses?.map((item) => (
-            <TouchableOpacity
-              key={item._id}
-              style={styles.card}
-              onPress={() => setSelected(item._id)}
-            >
-              <View style={styles.row}>
-                <Ionicons
-                  name={selected === item._id ? "radio-button-on" : "radio-button-off"}
-                  size={24}
-                  color="#047857"
-                  style={{ marginRight: 15 }}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>{item.street}</Text>
-                  <Text style={styles.details}>
-                    {item.city} - {item.zipCode}, {item.state}
-                  </Text>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 100 }}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={refreshProfile} />
+          }
+        >
+          {user?.addresses?.length ? (
+            user.addresses.map((item) => (
+              <TouchableOpacity
+                key={item._id}
+                style={styles.card}
+                onPress={() => setSelected(item._id)}
+              >
+                <View style={styles.row}>
+                  <Ionicons
+                    name={selected === item._id ? "radio-button-on" : "radio-button-off"}
+                    size={24}
+                    color="#047857"
+                    style={{ marginRight: 15 }}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.label}>{item.street}</Text>
+                    <Text style={styles.details}>
+                      {item.city} - {item.zipCode}, {item.state}
+                    </Text>
+                    {item.isDefault && <Text style={styles.defaultTag}>Default</Text>}
+                  </View>
                 </View>
-              </View>
 
-              <View style={styles.actionRow}>
-                <TouchableOpacity
-                  style={styles.actionBtn}
-                  onPress={() => handleEdit(item)}
-                >
-                  <Ionicons name="create-outline" size={18} color="#5dad28ff" />
-                  <Text style={styles.actionText}>Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.actionBtn}
-                  onPress={() => handleDelete(item._id)}
-                >
-                  <Ionicons name="trash-outline" size={18} color="red" />
-                  <Text style={[styles.actionText, { color: "red" }]}>
-                    Delete
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          ))}
+                <View style={styles.actionRow}>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => handleEdit(item)}
+                  >
+                    <Ionicons name="create-outline" size={18} color="#5dad28ff" />
+                    <Text style={styles.actionText}>Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => handleDelete(item._id)}
+                  >
+                    <Ionicons name="trash-outline" size={18} color="red" />
+                    <Text style={[styles.actionText, { color: "red" }]}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={{ textAlign: "center", marginTop: 30, color: "#777" }}>
+              No addresses added yet.
+            </Text>
+          )}
 
           <TouchableOpacity
             style={styles.addBtn}
@@ -191,11 +252,9 @@ const Address = () => {
     );
   }
 
+  // ✏️ Add/Edit Screen
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 20 }}
-    >
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 20 }}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => setMode("list")}>
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -242,10 +301,17 @@ const Address = () => {
         value={form.country}
         onChangeText={(val) => handleChange("country", val)}
       />
+
       <View style={styles.defaultRow}>
         <Text>Set as default</Text>
-        <TouchableOpacity onPress={() => setForm(prev => ({...prev, isDefault: !prev.isDefault}))}>
-            <Ionicons name={form.isDefault ? "checkbox" : "square-outline"} size={24} color="#047857" />
+        <TouchableOpacity
+          onPress={() => setForm((prev) => ({ ...prev, isDefault: !prev.isDefault }))}
+        >
+          <Ionicons
+            name={form.isDefault ? "checkbox" : "square-outline"}
+            size={24}
+            color="#047857"
+          />
         </TouchableOpacity>
       </View>
 
@@ -274,12 +340,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "flex-start" },
   label: { fontSize: 16, fontWeight: "600", color: "#222" },
   details: { fontSize: 14, color: "#555", marginTop: 4 },
-  phone: { fontSize: 13, color: "#777", marginTop: 2 },
-  actionRow: {
-    flexDirection: "row",
-    marginTop: 12,
-    justifyContent: "flex-end",
-  },
+  defaultTag: { marginTop: 4, fontSize: 12, color: "#047857", fontWeight: "bold" },
+  actionRow: { flexDirection: "row", marginTop: 12, justifyContent: "flex-end" },
   actionBtn: { flexDirection: "row", alignItems: "center", marginLeft: 20 },
   actionText: { fontSize: 14, marginLeft: 4, color: "#20c048ff" },
   addBtn: {
@@ -328,15 +390,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     elevation: 4,
   },
-  paymentText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  paymentText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   defaultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 20,
-  }
+  },
+  loaderContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
 });

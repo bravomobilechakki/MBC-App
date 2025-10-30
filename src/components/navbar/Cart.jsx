@@ -396,7 +396,7 @@ const Cart = () => {
                     color="#fff"
                     style={{ marginRight: 8 }}
                   />
-                  <Text style={styles.checkoutText}>Proceed to Payment</Text>
+                  <Text style={styles.checkoutText}>Proceed to Address</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={[styles.clearCartBtn]} onPress={clearCart}>
