@@ -1,4 +1,4 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useCallback } from 'react';
 import { fetchUserProfile as fetchUserProfileApi } from './UserActions';
 
 const UserContext = createContext();

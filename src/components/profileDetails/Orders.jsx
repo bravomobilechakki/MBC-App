@@ -21,79 +21,120 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // ✅ Fetch user orders
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const response = await axios.get(SummaryApi.getOrders.url, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         if (response.data.success) {
-          setOrders(response.data.data);
+          // ✅ Sort orders (latest first)
+          const sortedOrders = response.data.data.sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.orderDate || 0);
+            const dateB = new Date(b.createdAt || b.orderDate || 0);
+            return dateB - dateA;
+          });
+          setOrders(sortedOrders);
         } else {
           setError(response.data.message || "Failed to fetch orders");
         }
       } catch (err) {
+        console.error("Error fetching orders:", err);
         setError("Something went wrong while fetching orders.");
-        console.error(err);
       } finally {
         setLoading(false);
       }
-      
     };
 
-    if (token) {
-      fetchOrders();
-    }
+    if (token) fetchOrders();
   }, [token]);
 
+  // ✅ Status color helper
   const getStatusStyle = (status) => {
     switch (status) {
       case "Delivered":
-        return { backgroundColor: "#6f9b1f" };
+        return { color: "#2e7d32" };
       case "Processing":
-        return { backgroundColor: "#c4a314" };
+        return { color: "#c4a314" };
       case "Cancelled":
-        return { backgroundColor: "#F44336" };
+        return { color: "#F44336" };
       default:
-        return { backgroundColor: "#d3cdcd" };
+        return { color: "#777" };
     }
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      {/* Product Image */}
-      <Image
-        source={ item.orderItems[0]?.image ? { uri: item.orderItems[0].image } : { uri: "https://via.placeholder.com/80?text=No+Image" }}
-        style={styles.image}
-      />
+  // ✅ Navigate based on status
+  const handlePress = (item) => {
+    if (item.status === "Delivered") {
+      navigation.navigate("OrderDone", { order: item }); // ✅ fixed name + payload
+    } else {
+      navigation.navigate("OrderDetails", { order: item }); // ✅ passes data
+    }
+  };
 
-      {/* Product Info */}
-      <View style={styles.info}>
-        <Text style={styles.product}>{item.orderItems[0]?.name || 'Order'}</Text>
-        <Text style={styles.date}>Ordered on {new Date(item.createdAt).toLocaleDateString()}</Text>
-        <Text style={styles.amount}>₹{item.totalAmount}</Text>
+  // ✅ Render each order card
+  const renderItem = ({ item }) => {
+    const totalAmount =
+      item.totalAmount ||
+      item.orderItems.reduce(
+        (sum, i) => sum + (i.price || 0) * (i.quantity || 1),
+        0
+      );
 
-        {/* Status */}
-        <View style={[styles.statusBadge, getStatusStyle(item.status)]}>
-          <Text style={styles.statusText}>{item.status}</Text>
+    return (
+      <TouchableOpacity style={styles.card} onPress={() => handlePress(item)}>
+        {/* Product Image */}
+        <Image
+          source={
+            item.orderItems[0]?.image
+              ? { uri: item.orderItems[0].image }
+              : { uri: "https://via.placeholder.com/80?text=No+Image" }
+          }
+          style={styles.image}
+        />
+
+        {/* Order Info */}
+        <View style={styles.info}>
+          <Text style={styles.product} numberOfLines={2} ellipsizeMode="tail">
+            {item.orderItems[0]?.name || "Order"}
+          </Text>
+          <Text style={styles.quantity}>
+            📦 Quantity: {item.orderItems[0]?.quantity || 1}
+          </Text>
+          <Text style={styles.amount}>💰 Total: ₹{totalAmount}</Text>
+          <Text style={[styles.status, getStatusStyle(item.status)]}>
+            🕓 {item.status || "Pending"}
+          </Text>
         </View>
-      </View>
 
-      {/* Action */}
-      <TouchableOpacity style={styles.iconBtn}>
         <Ionicons name="chevron-forward" size={22} color="#333" />
       </TouchableOpacity>
-    </View>
-  );
+    );
+  };
 
+  // ✅ Loading state
   if (loading) {
-    return <ActivityIndicator size="large" style={{ flex: 1, justifyContent: "center" }} />;
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#2e7d32" />
+        <Text style={{ marginTop: 8 }}>Fetching your orders...</Text>
+      </View>
+    );
   }
 
+  // ✅ Error state
   if (error) {
-    return <Text style={{ textAlign: 'center', marginTop: 20, color: 'red' }}>{error}</Text>;
+    return (
+      <View style={styles.center}>
+        <Ionicons name="alert-circle" size={26} color="red" />
+        <Text style={{ color: "red", marginTop: 6 }}>{error}</Text>
+      </View>
+    );
   }
 
+  // ✅ Main UI
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -101,7 +142,7 @@ const Orders = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Orders</Text>
+        <Text style={styles.headerTitle}>🛍️ My Orders</Text>
       </View>
 
       {/* Orders List */}
@@ -113,7 +154,12 @@ const Orders = () => {
           contentContainerStyle={{ paddingBottom: 20 }}
         />
       ) : (
-        <Text style={{ textAlign: 'center', marginTop: 20 }}>You have no orders yet.</Text>
+        <View style={styles.center}>
+          <Ionicons name="cart-outline" size={48} color="#aaa" />
+          <Text style={{ textAlign: "center", marginTop: 10 }}>
+            You have no orders yet.
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -145,18 +191,11 @@ const styles = StyleSheet.create({
     elevation: 2,
     alignItems: "center",
   },
-  image: { width: 80, height: 80, borderRadius: 8, marginRight: 12 },
+  image: { width: 70, height: 70, borderRadius: 8, marginRight: 12 },
   info: { flex: 1 },
-  product: { fontSize: 16, fontWeight: "600", color: "#222" },
-  date: { fontSize: 13, color: "#777", marginTop: 2 },
-  amount: { fontSize: 14, fontWeight: "600", color: "#444", marginTop: 4 },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: "flex-start",
-    marginTop: 6,
-  },
-  statusText: { color: "#fff", fontSize: 12, fontWeight: "600" },
-  iconBtn: { padding: 6 },
+  product: { fontSize: 14, fontWeight: "600", color: "#222" },
+  quantity: { fontSize: 13, color: "#777", marginTop: 2, fontWeight: "500" },
+  amount: { fontSize: 15, fontWeight: "600", color: "#2e7d32", marginTop: 8 },
+  status: { fontSize: 14, marginTop: 4, fontWeight: "500" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });

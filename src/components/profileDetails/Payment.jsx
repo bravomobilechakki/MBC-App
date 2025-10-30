@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   ScrollView,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -24,12 +23,12 @@ const Payment = () => {
   const handlePlaceOrder = async () => {
     try {
       if (!token || !user) {
-        Alert.alert("Login Required", "Please login before placing an order.");
+        console.log("⚠️ Login Required: Please login before placing an order.");
         return;
       }
 
       const orderPayload = {
-        user: user._id, // Use user._id instead of token
+        user: user._id,
         orderItems: selectedItems.map((item) => ({
           product: item.product._id,
           name: item.product.name,
@@ -63,21 +62,17 @@ const Payment = () => {
       });
 
       if (response.data.success) {
-        Alert.alert(
-          "Order Placed",
-          `Your order has been successfully placed using ${selectedPayment}.`,
-          [{ text: "OK", onPress: () => navigation.navigate("orderdone") }]
-        );
+        console.log("✅ Order successfully placed:", response.data);
+        // ✅ Navigate directly to OrderDoneAnimated with order details
+        navigation.navigate("OrderDone", {
+          order: response.data.data, // pass created order data
+          paymentMethod: selectedPayment,
+        });
       } else {
-        Alert.alert("Error", response.data.message || "Failed to place the order.");
+        console.log("❌ Order placement failed:", response.data.message);
       }
     } catch (error) {
       console.error("❌ Error creating order:", error.response?.data || error.message);
-      const errorMessage = error.response?.data?.message || error.message || "Something went wrong while placing the order.";
-      Alert.alert(
-        "Error",
-        errorMessage
-      );
     }
   };
 
@@ -85,18 +80,32 @@ const Payment = () => {
     <TouchableOpacity
       style={[
         styles.paymentOption,
-        selectedPayment === method && { borderColor: "#047857", backgroundColor: "#ECFDF5" },
+        selectedPayment === method && {
+          borderColor: "#047857",
+          backgroundColor: "#ECFDF5",
+        },
       ]}
       onPress={() => setSelectedPayment(method)}
     >
-      <Ionicons name={iconName} size={28} color={selectedPayment === method ? "#047857" : "#333"} />
+      <Ionicons
+        name={iconName}
+        size={28}
+        color={selectedPayment === method ? "#047857" : "#333"}
+      />
       <View style={{ flex: 1, marginLeft: 12 }}>
-        <Text style={[styles.paymentTitle, selectedPayment === method && { color: "#047857" }]}>
+        <Text
+          style={[
+            styles.paymentTitle,
+            selectedPayment === method && { color: "#047857" },
+          ]}
+        >
           {title}
         </Text>
         {subtitle && <Text style={styles.paymentSubtitle}>{subtitle}</Text>}
       </View>
-      {selectedPayment === method && <Ionicons name="checkmark-circle" size={24} color="#047857" />}
+      {selectedPayment === method && (
+        <Ionicons name="checkmark-circle" size={24} color="#047857" />
+      )}
     </TouchableOpacity>
   );
 
@@ -107,13 +116,13 @@ const Payment = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payment Options</Text>
+        <Text style={styles.headerTitle}>💳 Payment Options</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {/* Order Summary */}
         <View style={styles.summary}>
-          <Text style={styles.summaryTitle}>Order Summary</Text>
+          <Text style={styles.summaryTitle}>🧾 Order Summary</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Items Total</Text>
             <Text style={styles.value}>₹{totalAmount}</Text>
@@ -152,7 +161,7 @@ const Payment = () => {
         <PaymentOption
           title="Net Banking"
           subtitle="Pay using your bank account"
-          iconName="bank-outline"
+          iconName="business-outline"
           method="NETBANKING"
         />
       </ScrollView>
@@ -190,7 +199,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     elevation: 2,
   },
-  summaryTitle: { fontSize: 16, fontWeight: "600", marginBottom: 10, color: "#444" },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 10,
+    color: "#444",
+  },
   row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
   label: { fontSize: 14, color: "#555" },
   value: { fontSize: 14, color: "#222" },

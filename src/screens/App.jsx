@@ -1,20 +1,30 @@
-import React, { useEffect, useContext, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from "react-native";
+   import React, { useEffect, useContext, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { UserProvider, UserContext } from "../context/UserContext";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Components
+// Context
+import { UserProvider, UserContext } from "../context/UserContext";
+
+// Navbar + Footer Components
+import Navbar from "../components/navbar/Navbar";
+import Footer from "../components/footer(Tab)/Footer";
+
+// Screens
 import Profile from "../components/navbar/Profile";
 import Cart from "../components/navbar/Cart";
 import Search from "../components/navbar/Search";
-import Navbar from "../components/navbar/Navbar";
 import Dashboard from "../components/dashboard/Dashboard";
-import Footer from "../components/footer(Tab)/Footer";
 import BookingOrder from "../components/footer(Tab)/Booking/BookingOrder";
 
-// Profile-related screens
+// Profile-related Screens
 import Orders from "../components/profileDetails/Orders";
 import Policy from "../components/profileDetails/Policy";
 import Wishlist from "../components/profileDetails/Wishlist";
@@ -24,14 +34,20 @@ import Notifications from "../components/profileDetails/Notifications";
 import Support from "../components/profileDetails/Support";
 import Login from "../components/Login/login";
 import SignUp from "../components/Login/signup";
-import VenueBooking from "../components/footer(Tab)/Booking/Booking";
+
+// Product Screens
 import ProductDetails from "../components/product/productDetails";
 import Product from "../components/product/product";
 import Review from "../components/product/review";
+
+// Booking and Order Screens
+import VenueBooking from "../components/footer(Tab)/Booking/Booking";
 import OrderDoneAnimated from "../components/profileDetails/OrderDone";
+import OrderDetails from "../components/profileDetails/OrderDetails";
 
+const Stack = createNativeStackNavigator();
 
-// Dummy placeholder screens
+// ✅ Dummy placeholder screens
 const SearchScreen = () => (
   <View style={styles.center}>
     <Text>Search Screen</Text>
@@ -44,8 +60,7 @@ const SettingScreen = () => (
   </View>
 );
 
-const Stack = createNativeStackNavigator();
-
+// ✅ Home Screen (Dashboard + Product + Footer)
 const Home = () => {
   return (
     <View style={styles.container}>
@@ -60,15 +75,17 @@ const Home = () => {
   );
 };
 
+// ✅ Stack Navigator (Handles routing)
 const AppNavigator = () => {
   const { user, setUser, setToken } = useContext(UserContext);
-  const [loading, setLoading] = useState(true); 
+  const [loading, setLoading] = useState(true);
 
+  // ✅ Load token and user data from AsyncStorage on app start
   useEffect(() => {
     const loadUserFromStorage = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem('token');
-        const storedUser = await AsyncStorage.getItem('user');
+        const storedToken = await AsyncStorage.getItem("token");
+        const storedUser = await AsyncStorage.getItem("user");
 
         if (storedToken && storedUser) {
           setToken(storedToken);
@@ -84,25 +101,27 @@ const AppNavigator = () => {
     loadUserFromStorage();
   }, []);
 
+  // ✅ Show loading spinner while loading user data
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#2e7d32" />
       </View>
     );
   }
 
+  // ✅ Define all routes
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {/* Main Screens */}
+      {/* Main Layout */}
       <Stack.Screen name="Home" component={Home} />
       <Stack.Screen name="Profile" component={Profile} />
-       <Stack.Screen name="dashboard" component={Dashboard} />
+      <Stack.Screen name="Dashboard" component={Dashboard} />
       <Stack.Screen name="Cart" component={Cart} />
       <Stack.Screen name="Search" component={SearchScreen} />
       <Stack.Screen name="Setting" component={SettingScreen} />
 
-      {/* Profile Details Screens */}
+      {/* Profile Detail Screens */}
       <Stack.Screen name="Orders" component={Orders} />
       <Stack.Screen name="Wishlist" component={Wishlist} />
       <Stack.Screen name="Payment" component={Payment} />
@@ -110,18 +129,26 @@ const AppNavigator = () => {
       <Stack.Screen name="Notifications" component={Notifications} />
       <Stack.Screen name="PrivacyPolicy" component={Policy} />
       <Stack.Screen name="Support" component={Support} />
+
+      {/* Auth Screens */}
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="SignUp" component={SignUp} />
+
+      {/* Product & Booking */}
       <Stack.Screen name="Booking" component={VenueBooking} />
+      <Stack.Screen name="BookingOrder" component={BookingOrder} />
       <Stack.Screen name="ProductDetails" component={ProductDetails} />
       <Stack.Screen name="Product" component={Product} />
-         <Stack.Screen name="Review" component={Review} />
-         <Stack.Screen name="orderdone" component={OrderDoneAnimated}/>
-             <Stack.Screen name="BookingOrder" component={BookingOrder}/>
+      <Stack.Screen name="Review" component={Review} />
+
+      {/* Orders Flow */}
+      <Stack.Screen name="OrderDetails" component={OrderDetails} />
+   <Stack.Screen name="OrderDone" component={OrderDoneAnimated} />
     </Stack.Navigator>
   );
 };
 
+// ✅ Main App Component (with Provider + Navigation)
 export default function App() {
   return (
     <UserProvider>
@@ -132,6 +159,7 @@ export default function App() {
   );
 }
 
+// ✅ Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -143,4 +171,3 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 });
-
