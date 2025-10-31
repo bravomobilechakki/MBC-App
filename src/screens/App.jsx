@@ -32,6 +32,7 @@ import Payment from "../components/profileDetails/Payment";
 import Address from "../components/profileDetails/Address";
 import Notifications from "../components/profileDetails/Notifications";
 import Support from "../components/profileDetails/Support";
+import UpdateProfile from "../components/profileDetails/UpdateProfile";
 import Login from "../components/Login/login";
 import SignUp from "../components/Login/signup";
 
@@ -129,6 +130,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Notifications" component={Notifications} />
       <Stack.Screen name="PrivacyPolicy" component={Policy} />
       <Stack.Screen name="Support" component={Support} />
+      <Stack.Screen name="UpdateProfile" component={UpdateProfile} />
 
       {/* Auth Screens */}
       <Stack.Screen name="Login" component={Login} />

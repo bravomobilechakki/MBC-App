@@ -48,16 +48,21 @@ const Profile = () => {
         {/* ✅ User Info Section */}
         <TouchableOpacity
           style={styles.profileHeader}
-          onPress={user ? () => {} : goToLogin}
+          onPress={() => navigation.navigate('UpdateProfile')}
         >
           <Image
-            source={{ uri: user?.avatar || 'https://i.pravatar.cc/150?img=12' }}
+            source={{
+              uri:
+                user?.avatar ||
+                'https://cdn-icons-png.flaticon.com/512/847/847969.png', // Neutral no-gender avatar
+            }}
             style={styles.avatar}
           />
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.name}>{user?.name || 'Guest User'}</Text>
             <Text style={styles.email}>{user?.mobile || 'Number'}</Text>
           </View>
+          <Ionicons name="create-outline" size={22} color="#555" />
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -92,6 +97,13 @@ const Profile = () => {
             onPress={() => navigation.navigate('Address')}
           >
             <Text style={styles.optionText}>Shipping Address</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.option}
+            onPress={() => navigation.navigate('UpdateProfile')}
+          >
+            <Text style={styles.optionText}>Update Profile</Text>
           </TouchableOpacity>
         </View>
 
@@ -145,6 +157,8 @@ const Profile = () => {
     </SafeAreaView>
   );
 };
+
+export default Profile;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -219,5 +233,3 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 });
-
-export default Profile;
