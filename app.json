@@ -1,4 +1,7 @@
 {
   "name": "MobileApp",
-  "displayName": "MobileApp"
+  "displayName": "MobileApp",
+  "plugins": [
+    "expo-asset"
+  ]
 }

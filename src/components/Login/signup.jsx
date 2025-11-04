@@ -31,6 +31,9 @@ const SignUp = ({ navigation }) => {
   const [otpDigits, setOtpDigits] = useState(Array(OTP_LENGTH).fill(''));
   const inputsRefs = useRef([]);
 
+  // =========================
+  // SEND OTP HANDLER
+  // =========================
   const handleSendOtp = async () => {
     if (!mobile.trim()) return Alert.alert('Error', 'Please enter your mobile number.');
     setIsLoading(true);
@@ -44,7 +47,20 @@ const SignUp = ({ navigation }) => {
       if (result.success) {
         Alert.alert('Success', 'OTP sent to your mobile.');
         setShowOTP(true);
-        setTimeout(() => inputsRefs.current[0]?.focus(), 100); // focus first OTP box
+
+        // 👇 Autofill OTP if backend sends it (for testing/dev)
+        if (result.otp) {
+          const otpString = String(result.otp).slice(0, OTP_LENGTH);
+          const otpArray = otpString.split('');
+          setOtpDigits(otpArray);
+
+          // Delay to ensure input boxes render before auto-verification
+          setTimeout(() => {
+            handleAutoVerify(otpString);
+          }, 500);
+        } else {
+          setTimeout(() => inputsRefs.current[0]?.focus(), 100);
+        }
       } else Alert.alert('Error', result.message || 'Failed to send OTP.');
     } catch (error) {
       Alert.alert('Error', 'Something went wrong.');
@@ -53,6 +69,9 @@ const SignUp = ({ navigation }) => {
     }
   };
 
+  // =========================
+  // OTP CHANGE HANDLER
+  // =========================
   const handleOtpChange = (text, index) => {
     if (/^\d*$/.test(text)) {
       const newOtpDigits = [...otpDigits];
@@ -66,8 +85,19 @@ const SignUp = ({ navigation }) => {
     }
   };
 
-  const handleVerifyOTP = async () => {
-    const otp = otpDigits.join('');
+  // =========================
+  // AUTO VERIFY WHEN OTP IS FILLED
+  // =========================
+  const handleAutoVerify = async (otp) => {
+    if (!otp || otp.length !== OTP_LENGTH) return;
+    handleVerifyOTP(otp);
+  };
+
+  // =========================
+  // VERIFY OTP HANDLER
+  // =========================
+  const handleVerifyOTP = async (autoOtp = null) => {
+    const otp = autoOtp || otpDigits.join('');
     if (otp.length !== OTP_LENGTH) return Alert.alert('Error', `Please enter ${OTP_LENGTH}-digit OTP.`);
     if (!name.trim() || !street.trim() || !city.trim() || !stateField.trim() || !postalCode.trim()) {
       return Alert.alert('Error', 'Please fill all profile fields.');
@@ -81,7 +111,17 @@ const SignUp = ({ navigation }) => {
           mobile,
           otp,
           name,
-          address: { street, city, state: stateField, zipCode: postalCode, country: 'India', isDefault: true },
+          address: {
+            mode: 'manual',
+            manualAddress: {
+              street,
+              city,
+              state: stateField,
+              zipCode: postalCode,
+              country: 'India',
+              isDefault: true,
+            },
+          },
         }),
       });
       const result = await response.json();
@@ -110,6 +150,7 @@ const SignUp = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.innerContainer}>
         <Text style={styles.title}>Create an account</Text>
 
+        {/* MOBILE INPUT */}
         <View style={styles.inputContainer}>
           <Ionicons name="call-outline" size={20} color="#777" style={styles.icon} />
           <TextInput
@@ -122,6 +163,7 @@ const SignUp = ({ navigation }) => {
           />
         </View>
 
+        {/* OTP SECTION */}
         {showOTP && !isVerified && (
           <>
             <Text style={styles.agreeText}>Enter the OTP sent to your number</Text>
@@ -135,13 +177,12 @@ const SignUp = ({ navigation }) => {
                   value={digit}
                   onChangeText={(text) => handleOtpChange(text, index)}
                   ref={(ref) => (inputsRefs.current[index] = ref)}
-                  autoFocus={index === 0}
                   textAlign="center"
-                  secureTextEntry
                 />
               ))}
             </View>
 
+            {/* PROFILE FIELDS */}
             <View style={styles.inputContainer}>
               <Ionicons name="person-outline" size={20} color="#777" style={styles.icon} />
               <TextInput
@@ -198,18 +239,20 @@ const SignUp = ({ navigation }) => {
               />
             </View>
 
-            <TouchableOpacity style={styles.button} onPress={handleVerifyOTP} disabled={isLoading}>
+            <TouchableOpacity style={styles.button} onPress={() => handleVerifyOTP()} disabled={isLoading}>
               <Text style={styles.buttonText}>{isLoading ? 'Verifying...' : 'Verify OTP & Submit'}</Text>
             </TouchableOpacity>
           </>
         )}
 
+        {/* SEND OTP BUTTON */}
         {!showOTP && (
           <TouchableOpacity style={styles.button} onPress={handleSendOtp} disabled={isLoading}>
             <Text style={styles.buttonText}>{isLoading ? 'Sending...' : 'Send OTP'}</Text>
           </TouchableOpacity>
         )}
 
+        {/* SOCIAL LOGIN + LOGIN LINK */}
         {!showOTP && (
           <>
             <Text style={styles.orText}>- OR Continue with -</Text>
@@ -240,16 +283,32 @@ const SignUp = ({ navigation }) => {
 export default SignUp;
 
 const styles = StyleSheet.create({
-  
   container: { flex: 1, backgroundColor: '#fff' },
   innerContainer: { padding: 20, alignItems: 'center' },
   title: { fontSize: 40, fontWeight: 'bold', alignSelf: 'flex-start', marginBottom: 30 },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', borderColor: '#ccc', borderWidth: 1, borderRadius: 8, marginBottom: 15, paddingHorizontal: 10, width: '100%' },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 8,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    width: '100%',
+  },
   icon: { marginRight: 10 },
   input: { flex: 1, height: 50, fontSize: 16 },
   agreeText: { fontSize: 12, color: '#777', textAlign: 'center', marginBottom: 20 },
-  otpContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '80%', marginBottom: 20 , color:'#777'},
-  otpInput: { width: 50, height: 50, borderColor: '#3b2d2dff', borderWidth: 1, borderRadius: 8, fontSize: 20 , color :'#777'},
+  otpContainer: { flexDirection: 'row', justifyContent: 'space-between', width: '80%', marginBottom: 20 },
+  otpInput: {
+    width: 50,
+    height: 50,
+    borderColor: '#3b2d2dff',
+    borderWidth: 1,
+    borderRadius: 8,
+    fontSize: 20,
+    color: '#777',
+  },
   button: { backgroundColor: '#ff375f', padding: 15, borderRadius: 8, alignItems: 'center', width: '100%', marginBottom: 20 },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   orText: { textAlign: 'center', color: '#777', marginBottom: 20 },

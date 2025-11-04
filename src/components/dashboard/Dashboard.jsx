@@ -11,7 +11,7 @@ import {
 import React, { useEffect, useState } from "react";
 import SummaryApi from "../../common";
 
-const Dashboard = () => {
+const Dashboard = ({ onCategorySelect }) => {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -29,10 +29,12 @@ const Dashboard = () => {
       if (!response.ok) throw new Error("Failed to fetch categories");
 
       const data = await response.json();
+      console.log("Fetched data:", data); 
       if (data.success && Array.isArray(data.data)) {
         setCategories(data.data);
       } else {
         setCategories([]);
+        console.log("No categories found or data format is incorrect:", data); 
       }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
@@ -58,10 +60,10 @@ const Dashboard = () => {
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl 
-          refreshing={refreshing} 
-          onRefresh={onRefresh} 
-          colors={['#007bff']} 
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#e0d6a7ff']}
         />
       }
     >
@@ -84,13 +86,13 @@ const Dashboard = () => {
           <ActivityIndicator size="small" color="#007bff" />
         ) : categories.length > 0 ? (
           categories.map((cat) => (
-            <View key={cat._id} style={styles.categoryItem}>
+            <TouchableOpacity key={cat._id} style={styles.categoryItem} onPress={() => onCategorySelect(cat._id)}>
               <Image
                 source={{ uri: cat.image }}
                 style={styles.categoryImage}
               />
-              <Text style={styles.categoryText}>{cat.title || cat.name}</Text>
-            </View>
+              <Text style={styles.categoryText}>{cat.name || cat.name}</Text>
+            </TouchableOpacity>
           ))
         ) : (
           <Text style={{ color: "#888" }}>No categories found</Text>

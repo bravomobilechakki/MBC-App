@@ -32,6 +32,7 @@ import Payment from "../components/profileDetails/Payment";
 import Address from "../components/profileDetails/Address";
 import Notifications from "../components/profileDetails/Notifications";
 import Support from "../components/profileDetails/Support";
+import Contectus from "../components/profileDetails/Contectus";
 import UpdateProfile from "../components/profileDetails/UpdateProfile";
 import Login from "../components/Login/login";
 import SignUp from "../components/Login/signup";
@@ -63,13 +64,19 @@ const SettingScreen = () => (
 
 // ✅ Home Screen (Dashboard + Product + Footer)
 const Home = () => {
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+  };
+
   return (
     <View style={styles.container}>
       <Navbar />
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
         <Search />
-        <Dashboard />
-        <Product />
+        <Dashboard onCategorySelect={handleCategorySelect} />
+        <Product selectedCategory={selectedCategory} />
       </ScrollView>
       <Footer />
     </View>
@@ -130,6 +137,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Notifications" component={Notifications} />
       <Stack.Screen name="PrivacyPolicy" component={Policy} />
       <Stack.Screen name="Support" component={Support} />
+       <Stack.Screen name="contectus" component={Contectus} />
       <Stack.Screen name="UpdateProfile" component={UpdateProfile} />
 
       {/* Auth Screens */}

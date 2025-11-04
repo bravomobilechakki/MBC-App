@@ -25,7 +25,6 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch order details if only orderId is passed
   useEffect(() => {
     if (!order && route.params?.orderId) {
       const fetchDetails = async () => {
@@ -87,7 +86,6 @@ const OrderDetails = () => {
     status,
   } = orderDetails;
 
-  // ✅ Compute total from items if API didn't provide it
   const totalAmount =
     apiTotal ||
     orderItems.reduce(
@@ -100,7 +98,7 @@ const OrderDetails = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* 🔙 Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -109,32 +107,44 @@ const OrderDetails = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Order Summary */}
+        {/* 🧾 Order Summary */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Summary</Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="receipt-outline" size={20} color="#2e7d32" />
+            <Text style={styles.sectionTitle}>Order Summary</Text>
+          </View>
+
           <View style={styles.detailRow}>
+            <Ionicons name="pricetag-outline" size={18} color="#555" />
             <Text style={styles.label}>Order ID:</Text>
             <Text style={styles.value}>{_id}</Text>
           </View>
           <View style={styles.detailRow}>
+            <Ionicons name="calendar-outline" size={18} color="#555" />
             <Text style={styles.label}>Order Date:</Text>
             <Text style={styles.value}>
               {new Date(createdAt).toLocaleDateString()}
             </Text>
           </View>
           <View style={styles.detailRow}>
+            <Ionicons name="cube-outline" size={18} color="#555" />
             <Text style={styles.label}>Status:</Text>
             <Text style={[styles.value, { color: "#2e7d32" }]}>{status}</Text>
           </View>
           <View style={styles.detailRow}>
+            <Ionicons name="cash-outline" size={18} color="#555" />
             <Text style={styles.label}>Total Amount:</Text>
             <Text style={styles.value}>₹{totalAmount.toFixed(2)}</Text>
           </View>
         </View>
 
-        {/* Order Progress */}
+        {/* 📍 Order Progress */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Order Progress</Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="trail-sign-outline" size={20} color="#2e7d32" />
+            <Text style={styles.sectionTitle}>Order Progress</Text>
+          </View>
+
           <View style={styles.progressContainer}>
             {statusSteps.map((step, index) => (
               <View key={step} style={styles.stepContainer}>
@@ -177,9 +187,12 @@ const OrderDetails = () => {
           </View>
         </View>
 
-        {/* Ordered Products */}
+        {/* 🛍️ Ordered Products */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ordered Products</Text>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="bag-handle-outline" size={20} color="#2e7d32" />
+            <Text style={styles.sectionTitle}>Ordered Products</Text>
+          </View>
           {orderItems.map((item) => (
             <View key={item._id} style={styles.productCard}>
               <Image
@@ -190,7 +203,7 @@ const OrderDetails = () => {
               <View style={styles.productInfo}>
                 <Text
                   style={styles.productName}
-                  numberOfLines={2}
+                  numberOfLines={1}
                   ellipsizeMode="tail"
                 >
                   {item.name}
@@ -206,62 +219,71 @@ const OrderDetails = () => {
           ))}
         </View>
 
-        {/* Shipping Address */}
+        {/* 🏠 Shipping Address */}
         {shippingAddress && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Shipping Address</Text>
-            <Text style={styles.addressText}>{shippingAddress.street}</Text>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="home-outline" size={20} color="#2e7d32" />
+              <Text style={styles.sectionTitle}>Shipping Address</Text>
+            </View>
+            <Text style={styles.addressText}>📍 {shippingAddress.street}</Text>
             <Text style={styles.addressText}>
-              {shippingAddress.city}, {shippingAddress.state} -{" "}
+              🏙️ {shippingAddress.city}, {shippingAddress.state} -{" "}
               {shippingAddress.zipCode}
             </Text>
-            <Text style={styles.addressText}>{shippingAddress.country}</Text>
+            <Text style={styles.addressText}>🌍 {shippingAddress.country}</Text>
           </View>
         )}
 
-     {/* Payment Info */}
-{paymentMethod && (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>Payment Method</Text>
+        {/* 💳 Payment Info */}
+        {paymentMethod && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="card-outline" size={20} color="#2e7d32" />
+              <Text style={styles.sectionTitle}>Payment Method</Text>
+            </View>
+            <View style={styles.paymentRow}>
+              <Ionicons
+                name={
+                  paymentMethod.toLowerCase().includes("upi")
+                    ? "logo-google"
+                    : paymentMethod.toLowerCase().includes("card")
+                    ? "card-outline"
+                    : paymentMethod.toLowerCase().includes("cash")
+                    ? "cash-outline"
+                    : "wallet-outline"
+                }
+                size={22}
+                color="#2e7d32"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.paymentText}>
+                {paymentMethod.toLowerCase().includes("upi")
+                  ? "UPI Payment"
+                  : paymentMethod.toLowerCase().includes("card")
+                  ? "Card Payment"
+                  : paymentMethod.toLowerCase().includes("cash")
+                  ? "Cash on Delivery"
+                  : "Other Method"}
+              </Text>
+            </View>
+          </View>
+        )}
 
-    <View style={styles.paymentRow}>
-      <Ionicons
-        name={
-          paymentMethod.toLowerCase().includes("upi")
-            ? "logo-google"
-            : paymentMethod.toLowerCase().includes("card")
-            ? "card-outline"
-            : paymentMethod.toLowerCase().includes("cash")
-            ? "cash-outline"
-            : "wallet-outline"
-        }
-        size={22}
-        color="#2e7d32"
-        style={{ marginRight: 8 }}
-      />
-
-      <Text style={styles.paymentText}>
-        {paymentMethod.toLowerCase().includes("upi")
-          ? "💸 UPI Payment"
-          : paymentMethod.toLowerCase().includes("card")
-          ? "💳 Card Payment"
-          : paymentMethod.toLowerCase().includes("cash")
-          ? "💵 Cash on Delivery"
-          : "💰 Other Method"}
-      </Text>
-    </View>
-  </View>
-)}
-
-
-        {/* Action Buttons */}
+        {/* 🚀 Action Buttons */}
         <View style={{ padding: 16 }}>
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() =>
-              Alert.alert("Track Order", "Tracking feature coming soon!")
+              Alert.alert("🚚 Track Order", "Tracking feature coming soon!")
             }
           >
+            <Ionicons
+              name="navigate-outline"
+              size={18}
+              color="#fff"
+              style={{ marginRight: 6 }}
+            />
             <Text style={styles.actionButtonText}>Track Order</Text>
           </TouchableOpacity>
         </View>
@@ -291,7 +313,6 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 16 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   errorText: { fontSize: 16, color: "red" },
-
   section: {
     backgroundColor: "#fff",
     borderRadius: 10,
@@ -299,20 +320,26 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     elevation: 2,
   },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    gap: 8,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
     color: "#333",
   },
   detailRow: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 5,
+    marginBottom: 6,
+    gap: 8,
   },
-  label: { fontSize: 15, color: "#555" },
-  value: { fontSize: 15, fontWeight: "600", color: "#333" },
-
+  label: { fontSize: 15, color: "#555", flex: 1 },
+  value: { fontSize: 15, fontWeight: "600", color: "#333", flex: 1 },
   productCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -323,7 +350,12 @@ const styles = StyleSheet.create({
   },
   productImage: { width: 60, height: 60, borderRadius: 8, marginRight: 10 },
   productInfo: { flex: 1 },
-  productName: { fontSize: 15, fontWeight: "600", color: "#333" },
+  productName: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#333",
+    maxWidth: "90%",
+  },
   productQtyPrice: { fontSize: 13, color: "#777", marginTop: 2 },
   productTotal: {
     fontSize: 14,
@@ -331,10 +363,7 @@ const styles = StyleSheet.create({
     color: "#2e7d32",
     marginTop: 5,
   },
-
   addressText: { fontSize: 15, color: "#555", lineHeight: 22 },
-  paymentText: { fontSize: 15, color: "#555" },
-
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -362,28 +391,28 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   lineActive: { backgroundColor: "#2e7d32" },
-
   actionButton: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: "#2e7d32",
     padding: 14,
     borderRadius: 10,
-    alignItems: "center",
-    marginBottom: 10,
   },
   actionButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
-
   paymentRow: {
-  flexDirection: "row",
-  alignItems: "center",
-},
-paymentText: {
-  fontSize: 15,
-  color: "#555",
-  fontWeight: "600",
-},
-
+    flexDirection: "row",                                                                                       
+    alignItems: "center",
+    marginTop: 5,
+  },
+  paymentText: {
+    fontSize: 15,
+    color: "#555",
+    fontWeight: "600",
+  },
 });
+

@@ -50,6 +50,9 @@ const SummaryApi = {
   addToWishlist: { url: `${backendDomain}/api/wishlist/add`, method: "post" },      // Add product to wishlist
   removeFromWishlist: { url: `${backendDomain}/api/wishlist/remove`, method: "delete" }, // Remove product from wishlist
   getWishlist: { url: `${backendDomain}/api/wishlist`, method: "get" },            // Get all wishlist items
+  // Contact Us
+createContact: { url: `${backendDomain}/api/contact`, method: "post" },
+
 };
 
 export default SummaryApi;

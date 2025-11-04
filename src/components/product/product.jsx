@@ -20,7 +20,7 @@ const CARD_MARGIN = 8;
 const CARD_WIDTH = (width - CARD_MARGIN * 3) / 2;
 const IMAGE_HEIGHT = CARD_WIDTH * 0.75;
 
-const Product = () => {
+const Product = ({ selectedCategory }) => {
   const navigation = useNavigation();
   const route = useRoute();
   const fromFooter = route.params?.fromFooter;
@@ -35,7 +35,11 @@ const Product = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch(SummaryApi.getProducts.url, {
+        let url = SummaryApi.getProducts.url;
+        if (selectedCategory) {
+          url += `?category=${selectedCategory}`;
+        }
+        const response = await fetch(url, {
           method: SummaryApi.getProducts.method.toUpperCase(),
         });
         const result = await response.json();
@@ -65,7 +69,7 @@ const Product = () => {
 
     fetchProducts();
     fetchWishlist();
-  }, [token]);
+  }, [token, selectedCategory]);
 
   // ----------------- Toggle Wishlist (Silent) -----------------
   const toggleWishlist = async (productId) => {

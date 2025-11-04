@@ -97,16 +97,14 @@ const Orders = () => {
 
         {/* Order Info */}
         <View style={styles.info}>
-          <Text style={styles.product} numberOfLines={2} ellipsizeMode="tail">
+          <Text style={styles.product} numberOfLines={1} ellipsizeMode="tail">
             {item.orderItems[0]?.name || "Order"}
           </Text>
           <Text style={styles.quantity}>
             📦 Quantity: {item.orderItems[0]?.quantity || 1}
           </Text>
           <Text style={styles.amount}>💰 Total: ₹{totalAmount}</Text>
-          <Text style={[styles.status, getStatusStyle(item.status)]}>
-            🕓 {item.status || "Pending"}
-          </Text>
+    
         </View>
 
         <Ionicons name="chevron-forward" size={22} color="#333" />

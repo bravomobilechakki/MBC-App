@@ -24,31 +24,44 @@ const BookingOrder = () => {
   const [loading, setLoading] = useState(true);
   const [loadingCancelId, setLoadingCancelId] = useState(null);
 
-  // Animation refs
+  // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const slideAnim = useRef(new Animated.Value(40)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  const startAnimation = () => {
+  const startScreenAnimation = () => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 800,
+        easing: Easing.out(Easing.exp),
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 600,
+        duration: 800,
         easing: Easing.out(Easing.exp),
         useNativeDriver: true,
       }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 6,
-        tension: 80,
-        useNativeDriver: true,
-      }),
     ]).start();
+  };
+
+  // Pulse animation for cancel button
+  const startPulse = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
   };
 
   const fetchBookings = async () => {
@@ -63,10 +76,11 @@ const BookingOrder = () => {
         url: SummaryApi.getBookings(user._id).url,
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (res.data.success) {
         setBookings(res.data.data || []);
-        startAnimation();
+        startScreenAnimation();
+        startPulse();
       } else {
         Alert.alert("Error", "Failed to fetch bookings.");
       }
@@ -119,7 +133,8 @@ const BookingOrder = () => {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#00C6A9" />
+        <Text style={{ color: "#00796b", marginTop: 8 }}>Loading bookings...</Text>
       </View>
     );
   }
@@ -147,7 +162,7 @@ const BookingOrder = () => {
     >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color="#333" />
+          <Ionicons name="arrow-back" size={28} color="#004D40" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Booking Orders</Text>
       </View>
@@ -162,11 +177,16 @@ const BookingOrder = () => {
             key={booking._id}
             style={[
               styles.card,
-              { opacity: fadeAnim, transform: [{ scale: scaleAnim }] },
+              {
+                opacity: fadeAnim,
+                transform: [
+                  { translateY: Animated.multiply(slideAnim, 0.1 * index) },
+                  { scale: fadeAnim },
+                ],
+              },
               booking.status === "cancelled" && { opacity: 0.6 },
             ]}
           >
-            {/* Label-Value Rows */}
             <View style={styles.infoRow}>
               <Text style={styles.label}>👤 Name</Text>
               <Text style={styles.value}>{booking.name}</Text>
@@ -182,37 +202,54 @@ const BookingOrder = () => {
               <Text style={styles.value}>{booking.serviceType}</Text>
             </View>
 
-            {/* Date & Time Row */}
             <View style={styles.dateTimeRow}>
               <View style={styles.dateContainer}>
-                <Ionicons name="calendar-outline" size={20} color="#00796b" />
+                <Ionicons name="calendar-outline" size={20} color="#004D40" />
                 <Text style={styles.dateValue}>{dateStr}</Text>
               </View>
               <View style={styles.timeContainer}>
-                <Ionicons name="time-outline" size={20} color="#00796b" />
+                <Ionicons name="time-outline" size={20} color="#004D40" />
                 <Text style={styles.dateValue}>{timeStr}</Text>
               </View>
             </View>
 
             <View style={styles.infoRow}>
               <Text style={styles.label}>🚦 Status</Text>
-              <Text style={[styles.value, booking.status === "cancelled" && { color: "#D32F2F" }]}>
+              <Text
+                style={[
+                  styles.value,
+                  booking.status === "cancelled" && { color: "#C62828" },
+                ]}
+              >
                 {booking.status}
               </Text>
             </View>
 
             {booking.status !== "cancelled" && (
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => handleCancel(booking._id)}
-                disabled={loadingCancelId === booking._id}
-              >
-                {loadingCancelId === booking._id ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.cancelBtnText}>🚫 Cancel Booking</Text>
-                )}
-              </TouchableOpacity>
+              <View style={styles.buttonRow}>
+                <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+                  <TouchableOpacity
+                    activeOpacity={0.6}
+                    style={styles.smallCancelBtn}
+                    onPress={() => handleCancel(booking._id)}
+                    disabled={loadingCancelId === booking._id}
+                  >
+                    {loadingCancelId === booking._id ? (
+                      <ActivityIndicator color="#C62828" size="small" />
+                    ) : (
+                      <Ionicons name="close-circle-outline" size={28} color="#C62828" />
+                    )}
+                  </TouchableOpacity>
+                </Animated.View>
+
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={styles.detailsBtn}
+                  onPress={() => navigation.navigate("OrderDetails", { booking })}
+                >
+                  <Animated.Text style={styles.detailsBtnText}>💰  Coins</Animated.Text>
+                </TouchableOpacity>
+              </View>
             )}
           </Animated.View>
         );
@@ -228,23 +265,22 @@ const BookingOrder = () => {
 export default BookingOrder;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f7", padding: 16 },
+  container: { flex: 1, backgroundColor: "#E0F2F1", padding: 16 },
   header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
-  headerTitle: { fontSize: 22, fontWeight: "700", marginLeft: 16, color: "#222" },
+  headerTitle: { fontSize: 22, fontWeight: "800", marginLeft: 16, color: "#004D40" },
 
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "#FFFFFF",
     padding: 20,
-    borderRadius: 16,
-    elevation: 3,
+    borderRadius: 20,
+    elevation: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    marginBottom: 18,
+    marginBottom: 20,
   },
 
-  // Modern e-commerce style for info
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -252,11 +288,11 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: "#f0f0f5",
+    backgroundColor: "#E8F5E9",
     borderRadius: 10,
   },
-  label: { fontSize: 14, color: "#888", fontWeight: "500" },
-  value: { fontSize: 16, color: "#111", fontWeight: "700" },
+  label: { fontSize: 14, color: "#777", fontWeight: "500" },
+  value: { fontSize: 16, color: "#222", fontWeight: "700" },
 
   dateTimeRow: {
     flexDirection: "row",
@@ -266,7 +302,7 @@ const styles = StyleSheet.create({
   dateContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#e0f2f1",
+    backgroundColor: "#B2DFDB",
     padding: 12,
     borderRadius: 12,
     flex: 0.48,
@@ -274,33 +310,51 @@ const styles = StyleSheet.create({
   timeContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#e0f2f1",
+    backgroundColor: "#B2DFDB",
     padding: 12,
     borderRadius: 12,
     flex: 0.48,
     justifyContent: "flex-end",
   },
-  dateValue: { fontSize: 16, fontWeight: "700", color: "#00796b", marginLeft: 6 },
+  dateValue: { fontSize: 16, fontWeight: "700", color: "#004D40", marginLeft: 6 },
 
-  cancelBtn: {
-    backgroundColor: "#D32F2F",
-    paddingVertical: 14,
-    borderRadius: 12,
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     marginTop: 16,
-    elevation: 2,
   },
-  cancelBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  smallCancelBtn: {
+    flex: 0.25,
+    paddingVertical: 8,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  detailsBtn: {
+    flex: 0.7,
+    backgroundColor: "#FFD54F",
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: "center",
+    elevation: 3,
+  },
+  detailsBtnText: {
+    color: "#4E342E",
+    fontWeight: "700",
+    fontSize: 16,
+  },
 
   homeBtn: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#00796B",
     padding: 16,
     borderRadius: 14,
     alignItems: "center",
     marginTop: 12,
-    elevation: 2,
+    elevation: 3,
   },
   homeBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
 
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });
+ 
