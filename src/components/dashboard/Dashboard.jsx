@@ -11,7 +11,7 @@ import {
 import React, { useEffect, useState } from "react";
 import SummaryApi from "../../common";
 
-const Dashboard = ({ onCategorySelect }) => {
+const Dashboard = ({ navigation }) => {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -86,7 +86,7 @@ const Dashboard = ({ onCategorySelect }) => {
           <ActivityIndicator size="small" color="#007bff" />
         ) : categories.length > 0 ? (
           categories.map((cat) => (
-            <TouchableOpacity key={cat._id} style={styles.categoryItem} onPress={() => onCategorySelect(cat._id)}>
+            <TouchableOpacity key={cat._id} style={styles.categoryItem} onPress={() => navigation.navigate('ProductsPage', { categoryId: cat._id })}>
               <Image
                 source={{ uri: cat.image }}
                 style={styles.categoryImage}
@@ -159,3 +159,4 @@ const styles = StyleSheet.create({
   viewAllBtn: { backgroundColor: "#fff", padding: 8, borderRadius: 8 },
   viewAllText: { color: "#4da6ff", fontWeight: "bold" },
 });
+

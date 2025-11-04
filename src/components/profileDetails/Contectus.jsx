@@ -92,7 +92,7 @@ const ContactUs = () => {
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={26} color="#fa3a3a" />
+              <Ionicons name="arrow-back" size={26} color="#777" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Contact Us</Text>
           </View>
@@ -106,7 +106,7 @@ const ContactUs = () => {
 
             {/* Name Input */}
             <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color="#fa3a3a" />
+              <Ionicons name="person-outline" size={20} color="#047857" />
               <TextInput
                 placeholder="Your Name"
                 style={styles.input}
@@ -118,7 +118,7 @@ const ContactUs = () => {
 
             {/* Phone Input */}
             <View style={styles.inputContainer}>
-              <Ionicons name="call-outline" size={20} color="#fa3a3a" />
+              <Ionicons name="call-outline" size={20} color="#047857" />
               <TextInput
                 placeholder="Phone Number"
                 style={styles.input}
@@ -135,7 +135,7 @@ const ContactUs = () => {
               <Ionicons
                 name="chatbox-ellipses-outline"
                 size={20}
-                color="#fa3a3a"
+                color="#047857"
                 style={{ marginTop: 10 }}
               />
               <TextInput
@@ -150,7 +150,7 @@ const ContactUs = () => {
 
             {/* Send Button */}
             <LinearGradient
-              colors={["#fa3a3a", "#ff6868"]}
+              colors={["#047857", "#047857"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.gradientBtn}
@@ -201,6 +201,8 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
+    backgroundColor:"#fff",
+    padding:8,
     alignItems: "center",
     marginBottom: 20,
   },
@@ -208,9 +210,9 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 20,
     fontWeight: "700",
-    color: "#fa3a3a",
-    textAlign: "center",
-    marginRight: 24,
+    marginLeft:20
+   
+   
   },
   card: {
     backgroundColor: "#fff",
@@ -258,6 +260,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor:"#047857",
     paddingVertical: 14,
   },
   sendText: {

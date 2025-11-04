@@ -43,12 +43,13 @@ export default function OrderDoneAnimated() {
           Animated.timing(subtitleOpacity, { toValue: 1, duration: 300, useNativeDriver: true }),
         ]),
       ]),
-    ]).start();
+    ]).start(() => {
+      // Animation complete, navigate to Orders page
+      setTimeout(() => {
+        navigation.replace('Orders');
+      }, 1000); // Navigate after 1 second
+    });
   }, []);
-
-  const handleDone = () => {
-    navigation.navigate('Home'); // ✅ Navigate to Profile screen
-  };
 
   return (
     <View style={styles.container}>
@@ -88,10 +89,6 @@ export default function OrderDoneAnimated() {
         <Text style={styles.title}>Order Completed</Text>
         <Text style={styles.subtitle}>Thanks! For Order 🚚</Text>
       </Animated.View>
-
-      <TouchableOpacity style={styles.button} onPress={handleDone} activeOpacity={0.8}>
-        <Text style={styles.buttonText}>Done</Text>
-      </TouchableOpacity>
     </View>
   );
 }

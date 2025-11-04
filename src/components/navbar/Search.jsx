@@ -1,12 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, TextInput, StyleSheet, TouchableOpacity, Image } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
-const Search = () => {
-  const [query, setQuery] = useState("");
+const Search = ({ searchQuery, setSearchQuery }) => {
 
   const handleSearch = () => {
-    console.log("Searching for:", query);
+    console.log("Searching for:", searchQuery);
     // API call / filter products here
   };
 
@@ -25,14 +24,14 @@ const Search = () => {
         <TextInput
           style={styles.input}
           placeholder="Search products..."
-          value={query}
-          onChangeText={setQuery}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
           returnKeyType="search"
           onSubmitEditing={handleSearch}
         />
 
-        {query.length > 0 && (
-  <TouchableOpacity onPress={() => setQuery("")}>
+        {searchQuery.length > 0 && (
+  <TouchableOpacity onPress={() => setSearchQuery("")}>
     <Icon name="close-circle" size={20} color="#777" />
   </TouchableOpacity>
 )}

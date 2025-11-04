@@ -404,6 +404,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+
+
   paymentRow: {
     flexDirection: "row",                                                                                       
     alignItems: "center",

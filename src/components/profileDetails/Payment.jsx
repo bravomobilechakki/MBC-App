@@ -74,6 +74,9 @@ const Payment = () => {
 
       if (response.data.success) {
         console.log("✅ Order successfully placed:", response.data);
+        await axios.delete(SummaryApi.clearCart.url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         navigation.navigate("OrderDone", {
           order: response.data.data,
           paymentMethod: selectedPayment,

@@ -20,7 +20,7 @@ const CARD_MARGIN = 8;
 const CARD_WIDTH = (width - CARD_MARGIN * 3) / 2;
 const IMAGE_HEIGHT = CARD_WIDTH * 0.75;
 
-const Product = ({ selectedCategory }) => {
+const Product = ({ selectedCategory, searchQuery }) => {
   const navigation = useNavigation();
   const route = useRoute();
   const fromFooter = route.params?.fromFooter;
@@ -43,8 +43,17 @@ const Product = ({ selectedCategory }) => {
           method: SummaryApi.getProducts.method.toUpperCase(),
         });
         const result = await response.json();
-        if (result.success) setProducts(result.data.products);
-        else setError(result.message || 'Failed to fetch products');
+        if (result.success) {
+          let fetchedProducts = result.data.products;
+          if (searchQuery) {
+            fetchedProducts = fetchedProducts.filter(product =>
+              product.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+          }
+          setProducts(fetchedProducts);
+        } else {
+          setError(result.message || 'Failed to fetch products');
+        }
       } catch (err) {
         console.error(err);
         setError('Something went wrong');
@@ -69,7 +78,7 @@ const Product = ({ selectedCategory }) => {
 
     fetchProducts();
     fetchWishlist();
-  }, [token, selectedCategory]);
+  }, [token, selectedCategory, searchQuery]);
 
   // ----------------- Toggle Wishlist (Silent) -----------------
   const toggleWishlist = async (productId) => {

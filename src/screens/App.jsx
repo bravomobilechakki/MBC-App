@@ -39,6 +39,7 @@ import SignUp from "../components/Login/signup";
 
 // Product Screens
 import ProductDetails from "../components/product/productDetails";
+import ProductsPage from './ProductsPage';
 import Product from "../components/product/product";
 import Review from "../components/product/review";
 
@@ -63,20 +64,16 @@ const SettingScreen = () => (
 );
 
 // ✅ Home Screen (Dashboard + Product + Footer)
-const Home = () => {
-  const [selectedCategory, setSelectedCategory] = useState(null);
-
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
-  };
+const Home = ({ navigation }) => {
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <View style={styles.container}>
       <Navbar />
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-        <Search />
-        <Dashboard onCategorySelect={handleCategorySelect} />
-        <Product selectedCategory={selectedCategory} />
+        <Search searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        <Dashboard navigation={navigation} />
+        <Product searchQuery={searchQuery} />
       </ScrollView>
       <Footer />
     </View>
@@ -149,6 +146,7 @@ const AppNavigator = () => {
       <Stack.Screen name="BookingOrder" component={BookingOrder} />
       <Stack.Screen name="ProductDetails" component={ProductDetails} />
       <Stack.Screen name="Product" component={Product} />
+      <Stack.Screen name="ProductsPage" component={ProductsPage} />
       <Stack.Screen name="Review" component={Review} />
 
       {/* Orders Flow */}
