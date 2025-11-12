@@ -70,8 +70,20 @@ const Profile = () => {
               <Text style={styles.email}>
                 {user?.mobile || 'No number available'}
               </Text>
+              {!user && (
+                <View style={styles.miniAuthButtonsContainer}>
+                  <TouchableOpacity style={styles.miniLoginButton} onPress={() => navigation.navigate('Login')}>
+                    <Text style={styles.miniButtonText}>Login</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.miniSignupButton} onPress={() => navigation.navigate('SignUp')}>
+                    <Text style={styles.miniButtonText}>Sign Up</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
           </Animatable.View>
+
+
 
           {/* Account Section */}
           <Animatable.View animation="fadeInUp" delay={200} style={styles.section}>
@@ -81,26 +93,31 @@ const Profile = () => {
               icon="cart-outline"
               label="My Orders"
               onPress={() => navigation.navigate('Orders')}
+              requiresAuth={true}
             />
             <Option
               icon="heart-outline"
               label="Wishlist"
               onPress={() => navigation.navigate('Wishlist')}
+              requiresAuth={true}
             />
             <Option
               icon="card-outline"
               label="Payment Methods"
               onPress={() => navigation.navigate('Payment')}
+              requiresAuth={true}
             />
             <Option
               icon="location-outline"
               label="Shipping Address"
               onPress={() => navigation.navigate('Address')}
+              requiresAuth={true}
             />
             <Option
               icon="person-circle-outline"
               label="Update Profile"
               onPress={() => navigation.navigate('UpdateProfile')}
+              requiresAuth={true}
             />
           </Animatable.View>
 
@@ -112,6 +129,7 @@ const Profile = () => {
               icon="notifications-outline"
               label="Notifications"
               onPress={() => navigation.navigate('Notifications')}
+              requiresAuth={true}
             />
             <Option
               icon="shield-checkmark-outline"
@@ -146,14 +164,26 @@ const Profile = () => {
   );
 };
 
-// ✅ Reusable Option Component with color prop
-const Option = ({ icon, label, onPress, labelColor = '#333' }) => (
-  <TouchableOpacity style={styles.option} onPress={onPress}>
-    <Ionicons name={icon} size={20} color="#fa3a3a" style={{ marginRight: 12 }} />
-    <Text style={[styles.optionText, { color: labelColor }]}>{label}</Text>
-    <Ionicons name="chevron-forward-outline" size={18} color="#ccc" style={{ marginLeft: 'auto' }} />
-  </TouchableOpacity>
-);
+const Option = ({ icon, label, onPress, labelColor = '#333', requiresAuth = false }) => {
+  const { user } = useContext(UserContext);
+  const navigation = useNavigation();
+
+  const handlePress = () => {
+    if (requiresAuth && !user) {
+      navigation.navigate('Login');
+    } else {
+      onPress();
+    }
+  };
+
+  return (
+    <TouchableOpacity style={styles.option} onPress={handlePress}>
+      <Ionicons name={icon} size={20} color="#fa3a3a" style={{ marginRight: 12 }} />
+      <Text style={[styles.optionText, { color: labelColor }]}>{label}</Text>
+      <Ionicons name="chevron-forward-outline" size={18} color="#ccc" style={{ marginLeft: 'auto' }} />
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create({
   gradient: {
@@ -248,6 +278,51 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
     marginLeft: 6,
+  },
+  loginButton: {
+    backgroundColor: '#2e7d32',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  signupButton: {
+    backgroundColor: '#ff375f',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  signupButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  miniAuthButtonsContainer: {
+    flexDirection: 'row',
+    marginTop: 10,
+    gap: 10,
+  },
+  miniLoginButton: {
+    backgroundColor: '#2e7d32',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  miniSignupButton: {
+    backgroundColor: '#ff375f',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  miniButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 12,
   },
 });
 

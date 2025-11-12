@@ -47,7 +47,13 @@ const Footer = () => {
       {/* Cart with badge */}
       <TouchableOpacity
         style={[styles.tab, styles.cartTab]}
-        onPress={() => navigation.navigate("Cart")}
+        onPress={() => {
+          if (token) {
+            navigation.navigate("Cart");
+          } else {
+            navigation.navigate("Login");
+          }
+        }}
       >
         <Ionicons name="cart-outline" size={20} color="#fff"  />
 

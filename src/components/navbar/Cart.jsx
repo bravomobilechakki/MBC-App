@@ -391,7 +391,7 @@ const Cart = () => {
                   }
                 >
                   <Ionicons
-                    name="wallet-outline"
+                    name="home-outline"
                     size={20}
                     color="#fff"
                     style={{ marginRight: 8 }}
@@ -461,8 +461,8 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, color: "#555", flex: 1 },
   value: { fontSize: 14, fontWeight: "600", color: "#222" },
   divider: { height: 1, backgroundColor: "#ddd", marginVertical: 6 },
-  checkoutBtn: { flexDirection: "row", justifyContent: "center", alignItems: "center", backgroundColor: "#2e7d32", paddingVertical: 14, borderRadius: 12, marginTop: 8 },
-  checkoutText: { color: "#fff", fontSize: 16, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 },
+  checkoutBtn: { flexDirection: "row", justifyContent: "center", alignItems: "center", backgroundColor: "#047857", paddingVertical: 14, borderRadius: 12, marginTop: 8 },
+  checkoutText: { color: "#fff", fontSize: 14, fontWeight: "600", textTransform: "uppercase", letterSpacing: 0.5 },
   clearCartBtn: { marginTop: 10, backgroundColor: "#ff4d4d", padding: 12, borderRadius: 12, alignItems: "center" },
   clearCartText: { color: "#fff", fontWeight: "600", fontSize: 14 },
 });

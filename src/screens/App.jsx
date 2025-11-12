@@ -48,6 +48,10 @@ import VenueBooking from "../components/footer(Tab)/Booking/Booking";
 import OrderDoneAnimated from "../components/profileDetails/OrderDone";
 import OrderDetails from "../components/profileDetails/OrderDetails";
 
+// Rewards and Wallet Screens
+import RewardsScreen from "./RewardsScreen";
+import WalletScreen from "./WalletScreen";
+
 const Stack = createNativeStackNavigator();
 
 // ✅ Dummy placeholder screens
@@ -151,7 +155,11 @@ const AppNavigator = () => {
 
       {/* Orders Flow */}
       <Stack.Screen name="OrderDetails" component={OrderDetails} />
-   <Stack.Screen name="OrderDone" component={OrderDoneAnimated} />
+      <Stack.Screen name="OrderDone" component={OrderDoneAnimated} />
+
+      {/* Rewards and Wallet */}
+      <Stack.Screen name="Rewards" component={RewardsScreen} />
+      <Stack.Screen name="Wallet" component={WalletScreen} />
     </Stack.Navigator>
   );
 };

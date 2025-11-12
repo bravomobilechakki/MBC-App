@@ -147,6 +147,12 @@ const SignUp = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Sign Up</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.innerContainer}>
         <Text style={styles.title}>Create an account</Text>
 
@@ -318,4 +324,15 @@ const styles = StyleSheet.create({
   loginContainer: { flexDirection: 'row', justifyContent: 'center' },
   loginText: { color: '#777' },
   loginLink: { color: '#ff375f', fontWeight: 'bold' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 10,
+    color: '#333',
+  },
 });

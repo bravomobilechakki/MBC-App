@@ -106,6 +106,12 @@ const Login = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Login</Text>
+      </View>
       <Text style={styles.title}>Welcome Back!</Text>
 
       {stage === 'phone' ? (
@@ -254,4 +260,15 @@ const styles = StyleSheet.create({
   signupContainer: { flexDirection: 'row', justifyContent: 'center' },
   signupText: { color: '#777' },
   signupLink: { color: '#ff375f', fontWeight: 'bold' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginLeft: 10,
+    color: '#333',
+  },
 });

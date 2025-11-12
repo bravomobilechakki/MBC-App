@@ -1,11 +1,13 @@
-import React, { useRef } from "react";
-import { View, StyleSheet, TouchableOpacity, Animated, Image } from "react-native";
+import React, { useRef, useContext } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Image, Linking, Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { UserContext } from "../../context/UserContext";
 import Ionicons from "react-native-vector-icons/Ionicons"; 
 
 const Navbar = () => {
   const menuAnimation = useRef(new Animated.Value(0)).current;
   const navigation = useNavigation();
+  const { user } = useContext(UserContext);
 
   const toggleMenu = () => {
     Animated.timing(menuAnimation, {
@@ -13,6 +15,21 @@ const Navbar = () => {
       duration: 300,
       useNativeDriver: true,
     }).start();
+  };
+
+  const openWhatsApp = () => {
+    const phoneNumber = "989889988";
+    const url = `whatsapp://send?phone=${phoneNumber}`;
+
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(url);
+        } else {
+          Alert.alert("WhatsApp not found", "Please install WhatsApp to send a message.");
+        }
+      })
+      .catch((err) => console.error("An error occurred", err));
   };
 
   const menuIconRotation = menuAnimation.interpolate({
@@ -23,17 +40,15 @@ const Navbar = () => {
   return (
     <View style={styles.container}>
       {/* ✅ Menu Icon */}
-      {/* ✅ Menu Icon (custom image instead of Ionicon) */}
-<TouchableOpacity onPress={toggleMenu}>
-  <Animated.View style={{ transform: [{ rotate: menuIconRotation }] }}>
-    <Image
-      source={require("../../images/menu.png")} // 👉 replace with your menu image
-      style={styles.menuIcon}
-      resizeMode="contain"
-    />
-  </Animated.View>
-</TouchableOpacity>
-
+      <TouchableOpacity onPress={toggleMenu}>
+        <Animated.View style={{ transform: [{ rotate: menuIconRotation }] }}>
+          <Image
+            source={require("../../images/menu.png")}
+            style={styles.menuIcon}
+            resizeMode="contain"
+          />
+        </Animated.View>
+      </TouchableOpacity>
 
       {/* ✅ Logo Image */}
       <Image
@@ -44,17 +59,24 @@ const Navbar = () => {
 
       {/* ✅ Right Side Icons */}
       <View style={styles.iconsContainer}>
-        {/* Custom cart image */}
-        <TouchableOpacity onPress={() => navigation.navigate("Notifications")}>
+        <TouchableOpacity onPress={() => navigation.navigate("Wallet")} style={styles.iconWithText}>
           <Image
-            source={require("../../images/notification.png")}
+            source={require("../../images/money-bag.png")}
             style={styles.cartIcon}
             resizeMode="contain"
           />
+          <Text style={styles.coinText}>{user?.coins || 0}</Text>
         </TouchableOpacity>
 
-        {/* Profile using Ionicon */}
-           <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+        {/* <TouchableOpacity onPress={openWhatsApp}>
+          <Image
+            source={require("../../images/whatsapp.png")}
+            style={styles.cartIcon}wd
+            resizeMode="contain"
+          />
+        </TouchableOpacity> */}
+
+        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
           <Image
             source={require("../../images/user.png")}
             style={styles.cartIcon}
@@ -80,19 +102,25 @@ const styles = StyleSheet.create({
   },
   iconsContainer: {
     flexDirection: "row",
-    gap:20,
+    gap: 20,
+    alignItems: "center",
+  },
+  iconWithText: {
+    flexDirection: "row",
     alignItems: "center",
   },
   cartIcon: {
-    width: 27,   // adjust size to match Ionicon
+    width: 27,
     height: 27,
   },
+  coinText: {
+    marginLeft: 5,
+    fontWeight: "bold",
+  },
   menuIcon: {
-  width: 28,   // same size as Ionicon for balance
-  height: 28,
-
-},
-
+    width: 28,
+    height: 28,
+  },
 });
 
 export default Navbar;

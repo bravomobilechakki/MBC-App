@@ -203,6 +203,12 @@ const Address = () => {
                     <Text style={[styles.actionText, { color: "red" }]}>Delete</Text>
                   </TouchableOpacity>
                 </View>
+
+                <view>
+                  <text> 
+
+                  </text>
+                </view>
               </TouchableOpacity>
             ))
           ) : (
@@ -245,7 +251,8 @@ const Address = () => {
               });
             }}
           >
-            <Text style={styles.paymentText}>Proceed to Payment</Text>
+            <Text style={styles.paymentText}>
+              💸 Proceed to Payment</Text>
           </TouchableOpacity>
         )}
       </View>

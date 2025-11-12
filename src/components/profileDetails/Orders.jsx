@@ -67,11 +67,7 @@ const Orders = () => {
 
   // ✅ Navigate based on status
   const handlePress = (item) => {
-    if (item.status === "Delivered") {
-      navigation.navigate("OrderDone", { order: item }); // ✅ fixed name + payload
-    } else {
-      navigation.navigate("OrderDetails", { order: item }); // ✅ passes data
-    }
+    navigation.navigate("OrderDetails", { order: item }); // ✅ passes data
   };
 
   // ✅ Render each order card

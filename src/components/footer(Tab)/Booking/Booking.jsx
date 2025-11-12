@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef } from "react";
+import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   Modal,
   Easing
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
 import LinearGradient from "react-native-linear-gradient";
@@ -23,7 +23,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 
 const VenueBooking = () => {
   const navigation = useNavigation();
-  const { user, token } = useContext(UserContext);
+  const { user, token, fetchUserProfile } = useContext(UserContext);
 
   const [name, setName] = useState(user?.name || "");
   const [phone, setPhone] = useState(user?.mobile || "");
@@ -35,12 +35,36 @@ const VenueBooking = () => {
   const [stateName, setStateName] = useState("");
   const [pincode, setPincode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
 
   // ✅ Animation modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
   const scales = useRef({}).current;
+
+  useEffect(() => {
+    if (user?.addresses) {
+      const defaultAddress = user.addresses.find((a) => a.isDefault);
+      if (defaultAddress) {
+        handleSelectAddress(defaultAddress);
+      }
+    }
+  }, [user]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserProfile();
+    }, [fetchUserProfile])
+  );
+
+  const handleSelectAddress = (address) => {
+    setSelectedAddressId(address._id);
+    setStreet(address.street);
+    setCity(address.city);
+    setStateName(address.state);
+    setPincode(address.zipCode);
+  };
 
   const venueItems = [
     { name: "Spices", color: ["#FF6F61", "#FF8A65"], image: require("../../../images/spice.png") },
@@ -59,15 +83,6 @@ const VenueBooking = () => {
       Animated.timing(scales[item.name], { toValue: 1, duration: 150, useNativeDriver: true }),
     ]).start();
   };
-
-  const buildManualAddress = () => ({
-    street: street.trim(),
-    city: city.trim(),
-    state: stateName.trim(),
-    zipCode: pincode.trim(),
-    country: "India",
-    isDefault: true,
-  });
 
   const validate = () => {
     if (!name || !phone || !venue) {
@@ -99,12 +114,19 @@ const VenueBooking = () => {
   const handleBooking = async () => {
     if (!validate()) return;
 
+    let addressPayload;
+    if (selectedAddressId) {
+      addressPayload = user.addresses.find(addr => addr._id === selectedAddressId);
+    } else {
+      addressPayload = { street, city, state: stateName, zipCode: pincode, country: "India" };
+    }
+
     const payload = {
       name,
       mobile: phone,
       serviceType: venue,
-      address: { mode: "manual", manualAddress: buildManualAddress() },
       user: user._id,
+      address: addressPayload,
     };
 
     setIsLoading(true);
@@ -131,7 +153,7 @@ const VenueBooking = () => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps='handled'>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.navigate("Home")}>
           <Ionicons name="arrow-back" size={28} />
@@ -181,7 +203,40 @@ const VenueBooking = () => {
       )}
 
       <View style={{ marginTop: 16 }}>
-        <Text style={styles.label}>Address</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.label}>Address</Text>
+          <TouchableOpacity onPress={() => navigation.navigate("Address")}>
+            <Text style={styles.addAddressLink}>+ Add New</Text>
+          </TouchableOpacity>
+        </View>
+        {user?.addresses?.length > 0 ? (
+          <View>
+            {user.addresses.map((item) => (
+              <TouchableOpacity
+                key={item._id}
+                style={styles.addressCard}
+                onPress={() => handleSelectAddress(item)}
+              >
+                <Ionicons
+                  name={selectedAddressId === item._id ? "radio-button-on" : "radio-button-off"}
+                  size={24}
+                  color="#047857"
+                  style={{ marginRight: 15 }}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.addressLabel}>{item.street}</Text>
+                  <Text style={styles.addressDetails}>
+                    {item.city} - {item.zipCode}, {item.state}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.noAddressContainer}>
+            <Text>No saved addresses.</Text>
+          </View>
+        )}
         <TextInput style={styles.input} value={street} onChangeText={setStreet} placeholder="Street" placeholderTextColor="#aaa" />
         <TextInput style={styles.input} value={city} onChangeText={setCity} placeholder="City" placeholderTextColor="#aaa" />
         <TextInput style={styles.input} value={stateName} onChangeText={setStateName} placeholder="State" placeholderTextColor="#aaa" />
@@ -232,7 +287,23 @@ const styles = StyleSheet.create({
   modalContent: { width: 250, height: 250, backgroundColor: "#fff", borderRadius: 20, justifyContent: "center", alignItems: "center" },
   modalText: { fontSize: 20, fontWeight: "700", marginTop: 16 },
   modalSubText: { fontSize: 16, marginTop: 8, color: "#555", textAlign: "center"},
-  
+  addressCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  addressLabel: { fontSize: 16, fontWeight: "600", color: "#222" },
+  addressDetails: { fontSize: 14, color: "#555", marginTop: 4 },
+  noAddressContainer: {
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  addAddressLink: {
+    color: "#047857",
+    marginTop: 8,
+  },
 });
-
-

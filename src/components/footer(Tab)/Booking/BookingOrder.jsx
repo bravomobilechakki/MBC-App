@@ -9,12 +9,16 @@ import {
   Animated,
   Easing,
   ScrollView,
+  Image,
+  Dimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import SummaryApi from "../../../common";
 import { UserContext } from "../../../context/UserContext";
+
+const { width } = Dimensions.get("window");
 
 const BookingOrder = () => {
   const navigation = useNavigation();
@@ -24,40 +28,41 @@ const BookingOrder = () => {
   const [loading, setLoading] = useState(true);
   const [loadingCancelId, setLoadingCancelId] = useState(null);
 
-  // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(40)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const marqueeAnim = useRef(new Animated.Value(0)).current;
 
-  const startScreenAnimation = () => {
+  // Header fade-in
+  const startAnimations = () => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
-        easing: Easing.out(Easing.exp),
+        duration: 600,
         useNativeDriver: true,
+        easing: Easing.out(Easing.ease),
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 800,
-        easing: Easing.out(Easing.exp),
+        duration: 600,
         useNativeDriver: true,
+        easing: Easing.out(Easing.ease),
       }),
     ]).start();
   };
 
-  // Pulse animation for cancel button
-  const startPulse = () => {
+  // Moving marquee text
+  const startMarquee = () => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.1,
-          duration: 600,
+        Animated.timing(marqueeAnim, {
+          toValue: -width,
+          duration: 6000,
           useNativeDriver: true,
+          easing: Easing.linear,
         }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 600,
+        Animated.timing(marqueeAnim, {
+          toValue: 0,
+          duration: 0,
           useNativeDriver: true,
         }),
       ])
@@ -65,10 +70,6 @@ const BookingOrder = () => {
   };
 
   const fetchBookings = async () => {
-    if (!user?._id) {
-      Alert.alert("Error", "User not found!");
-      return;
-    }
     setLoading(true);
     try {
       const res = await axios({
@@ -76,16 +77,21 @@ const BookingOrder = () => {
         url: SummaryApi.getBookings(user._id).url,
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (res.data.success) {
-        setBookings(res.data.data || []);
-        startScreenAnimation();
-        startPulse();
+        // Sort bookings: newest first, cancelled last
+        const sorted = res.data.data.sort((a, b) => {
+          if (a.status === "cancelled" && b.status !== "cancelled") return 1;
+          if (b.status === "cancelled" && a.status !== "cancelled") return -1;
+          return new Date(b.date) - new Date(a.date);
+        });
+        setBookings(sorted);
+        startAnimations();
+        startMarquee();
       } else {
         Alert.alert("Error", "Failed to fetch bookings.");
       }
     } catch (err) {
-      console.error("Fetch bookings error:", err);
+      console.error(err);
       Alert.alert("Error", "Unable to fetch bookings.");
     } finally {
       setLoading(false);
@@ -96,31 +102,26 @@ const BookingOrder = () => {
     fetchBookings();
   }, []);
 
-  const handleCancel = (bookingId) => {
+  const handleCancel = (id) => {
     Alert.alert("Cancel Booking", "Are you sure you want to cancel this booking?", [
       { text: "No" },
       {
-        text: "Yes, Cancel",
+        text: "Yes",
         onPress: async () => {
-          setLoadingCancelId(bookingId);
+          setLoadingCancelId(id);
           try {
             const res = await axios({
-              method: SummaryApi.cancelBooking(bookingId).method,
-              url: SummaryApi.cancelBooking(bookingId).url,
+              method: SummaryApi.cancelBooking(id).method,
+              url: SummaryApi.cancelBooking(id).url,
               headers: { Authorization: `Bearer ${token}` },
             });
-
             if (res.data.success) {
-              const updatedBooking = res.data.data;
               setBookings((prev) =>
-                prev.map((b) => (b._id === bookingId ? updatedBooking : b))
+                prev.map((b) => (b._id === id ? res.data.data : b))
               );
-              Alert.alert("Cancelled", "Booking has been cancelled.");
-            } else {
-              Alert.alert("Error", "Failed to cancel booking. Try again.");
             }
           } catch (err) {
-            console.error("Cancel booking error:", err);
+            console.error(err);
             Alert.alert("Error", "Error cancelling booking.");
           } finally {
             setLoadingCancelId(null);
@@ -130,133 +131,118 @@ const BookingOrder = () => {
     ]);
   };
 
-  if (loading) {
+  if (loading)
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#00C6A9" />
-        <Text style={{ color: "#00796b", marginTop: 8 }}>Loading bookings...</Text>
+        <ActivityIndicator size="large" color="#00897B" />
+        <Text style={{ color: "#00695C", marginTop: 8 }}>Fetching your bookings...</Text>
       </View>
     );
-  }
 
-  if (bookings.length === 0) {
+  if (bookings.length === 0)
     return (
       <Animated.View
         style={[styles.center, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
       >
-        <Text style={{ fontSize: 18, fontWeight: "600", color: "#555" }}>No bookings found.</Text>
+        <Ionicons name="document-text-outline" size={60} color="#B0BEC5" />
+        <Text style={{ fontSize: 18, fontWeight: "600", color: "#607D8B", marginTop: 10 }}>
+          No bookings yet!
+        </Text>
       </Animated.View>
     );
-  }
 
-  const sortedBookings = [...bookings].sort((a, b) => {
-    if (a.status === "cancelled" && b.status !== "cancelled") return 1;
-    if (a.status !== "cancelled" && b.status === "cancelled") return -1;
-    return new Date(b.date) - new Date(a.date);
-  });
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "completed":
+        return "#43A047";
+      case "cancelled":
+        return "#E53935";
+      case "pending":
+      default:
+        return "#FB8C00";
+    }
+  };
 
   return (
     <Animated.ScrollView
       style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
-      contentContainerStyle={{ paddingBottom: 30 }}
+      contentContainerStyle={{ paddingBottom: 50 }}
     >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color="#004D40" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Booking Orders</Text>
-      </View>
+      {/* Header Banner */}
+      <View style={styles.headerBanner}>
+        <Image
+          source={require("../../../images/delivery-van.png")}
+          style={styles.vanImage}
+          resizeMode="contain"
+        />
+        <Text style={styles.bannerTitle}>My Bookings</Text>
+        <Text style={styles.bannerSubtitle}>Track & manage  your service requests</Text>
 
-      {sortedBookings.map((booking, index) => {
-        const bookingDate = new Date(booking.date);
-        const dateStr = bookingDate.toLocaleDateString();
-        const timeStr = bookingDate.toLocaleTimeString();
-
-        return (
-          <Animated.View
-            key={booking._id}
+        {/* Moving marquee text */}
+        <View style={styles.marqueeContainer}>
+          <Animated.Text
             style={[
-              styles.card,
-              {
-                opacity: fadeAnim,
-                transform: [
-                  { translateY: Animated.multiply(slideAnim, 0.1 * index) },
-                  { scale: fadeAnim },
-                ],
-              },
-              booking.status === "cancelled" && { opacity: 0.6 },
+              styles.marqueeText,
+              { transform: [{ translateX: marqueeAnim }] },
             ]}
           >
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>👤 Name</Text>
-              <Text style={styles.value}>{booking.name}</Text>
-            </View>
+            🚚 Your comfort is on the way 🚚
+          </Animated.Text>
+        </View>
+      </View>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>📞 Mobile</Text>
-              <Text style={styles.value}>{booking.mobile}</Text>
-            </View>
+      {/* Booking Cards */}
+      {bookings.map((booking) => {
+        const bookingDate = new Date(booking.date);
+        const date = bookingDate.toLocaleDateString();
+        const time = bookingDate.toLocaleTimeString();
+        const color = getStatusColor(booking.status);
 
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>🛠 Service</Text>
-              <Text style={styles.value}>{booking.serviceType}</Text>
-            </View>
-
-            <View style={styles.dateTimeRow}>
-              <View style={styles.dateContainer}>
-                <Ionicons name="calendar-outline" size={20} color="#004D40" />
-                <Text style={styles.dateValue}>{dateStr}</Text>
+        return (
+          <Animated.View key={booking._id} style={[styles.card, { borderLeftColor: color }]}>
+            <View style={styles.cardTop}>
+              <View>
+                <Text style={styles.service}>{booking.serviceType}</Text>
+                <Text style={styles.date}>{date} • {time}</Text>
               </View>
-              <View style={styles.timeContainer}>
-                <Ionicons name="time-outline" size={20} color="#004D40" />
-                <Text style={styles.dateValue}>{timeStr}</Text>
+              <View style={[styles.statusBadge, { backgroundColor: color + "20" }]}>
+                <Text style={[styles.statusText, { color }]}>{booking.status}</Text>
               </View>
             </View>
 
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>🚦 Status</Text>
-              <Text
-                style={[
-                  styles.value,
-                  booking.status === "cancelled" && { color: "#C62828" },
-                ]}
-              >
-                {booking.status}
-              </Text>
+            <View style={styles.infoBlock}>
+              <Text style={styles.label}>👤 {booking.name}</Text>
+              <Text style={styles.label}>📞 {booking.mobile}</Text>
             </View>
 
-            {booking.status !== "cancelled" && (
-              <View style={styles.buttonRow}>
-                <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-                  <TouchableOpacity
-                    activeOpacity={0.6}
-                    style={styles.smallCancelBtn}
-                    onPress={() => handleCancel(booking._id)}
-                    disabled={loadingCancelId === booking._id}
-                  >
-                    {loadingCancelId === booking._id ? (
-                      <ActivityIndicator color="#C62828" size="small" />
-                    ) : (
-                      <Ionicons name="close-circle-outline" size={28} color="#C62828" />
-                    )}
-                  </TouchableOpacity>
-                </Animated.View>
-
+            <View style={styles.actions}>
+              {booking.status !== "cancelled" && (
                 <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={styles.detailsBtn}
-                  onPress={() => navigation.navigate("OrderDetails", { booking })}
+                  style={styles.cancelBtn}
+                  onPress={() => handleCancel(booking._id)}
+                  disabled={loadingCancelId === booking._id}
                 >
-                  <Animated.Text style={styles.detailsBtnText}>💰  Coins</Animated.Text>
+                  {loadingCancelId === booking._id ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={styles.cancelText}>Cancel</Text>
+                  )}
                 </TouchableOpacity>
-              </View>
-            )}
+              )}
+              <TouchableOpacity
+                style={styles.detailsBtn}
+                onPress={() => navigation.navigate("OrderDetails", { booking })}
+              >
+                <Ionicons name="wallet-outline" size={18} color="#fff" />
+                <Text style={styles.detailsText}> Coins</Text>
+              </TouchableOpacity>
+            </View>
           </Animated.View>
         );
       })}
 
       <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate("Home")}>
-        <Text style={styles.homeBtnText}>🏠 Go to Home</Text>
+        <Text style={styles.homeBtnText}>🏠 Back to Home</Text>
       </TouchableOpacity>
     </Animated.ScrollView>
   );
@@ -265,96 +251,133 @@ const BookingOrder = () => {
 export default BookingOrder;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#E0F2F1", padding: 16 },
-  header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
-  headerTitle: { fontSize: 22, fontWeight: "800", marginLeft: 16, color: "#004D40" },
-
-  card: {
-    backgroundColor: "#FFFFFF",
-    padding: 20,
-    borderRadius: 20,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+  container: {
+    flex: 1,
+    backgroundColor: "#E0F7FA",
+    padding: 16,
+  },
+  headerBanner: {
+    alignItems: "center",
+    backgroundColor: "#00ACC1",
+    padding: 24,
+    borderRadius: 18,
     marginBottom: 20,
   },
-
-  infoRow: {
+  vanImage: {
+    width: 80,
+    height: 50,
+    marginBottom: 8,
+  },
+  bannerTitle: {
+    fontSize: 22,
+    color: "#fff",
+    fontWeight: "800",
+  },
+  bannerSubtitle: {
+    fontSize: 14,
+    color: "#E0F2F1",
+    marginBottom: 6,
+  },
+  marqueeContainer: {
+    overflow: "hidden",
+    height: 25,
+    width: "100%",
+    marginTop: 6,
+  },
+  marqueeText: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 18,
+    elevation: 3,
+    borderLeftWidth: 6,
+  },
+  cardTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "#E8F5E9",
+  },
+  service: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#004D40",
+  },
+  date: {
+    fontSize: 13,
+    color: "#607D8B",
+  },
+  statusBadge: {
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  statusText: {
+    fontWeight: "700",
+    fontSize: 13,
+    textTransform: "capitalize",
+  },
+  infoBlock: {
+    marginTop: 14,
+    backgroundColor: "#E0F2F1",
+    padding: 12,
     borderRadius: 10,
   },
-  label: { fontSize: 14, color: "#777", fontWeight: "500" },
-  value: { fontSize: 16, color: "#222", fontWeight: "700" },
-
-  dateTimeRow: {
+  label: {
+    fontSize: 14,
+    color: "#004D40",
+    fontWeight: "600",
+  },
+  actions: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 14,
-  },
-  dateContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#B2DFDB",
-    padding: 12,
-    borderRadius: 12,
-    flex: 0.48,
-  },
-  timeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#B2DFDB",
-    padding: 12,
-    borderRadius: 12,
-    flex: 0.48,
-    justifyContent: "flex-end",
-  },
-  dateValue: { fontSize: 16, fontWeight: "700", color: "#004D40", marginLeft: 6 },
-
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     marginTop: 16,
   },
-  smallCancelBtn: {
-    flex: 0.25,
-    paddingVertical: 8,
-    borderRadius: 12,
+  cancelBtn: {
+    flex: 0.45,
+    backgroundColor: "#D32F2F",
+    borderRadius: 10,
+    paddingVertical: 10,
     alignItems: "center",
-    justifyContent: "center",
+  },
+  cancelText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
   },
   detailsBtn: {
-    flex: 0.7,
-    backgroundColor: "#FFD54F",
+    flex: 0.45,
+    backgroundColor: "#FFC107",
+    borderRadius: 10,
     paddingVertical: 10,
-    borderRadius: 12,
     alignItems: "center",
-    elevation: 3,
+    flexDirection: "row",
+    justifyContent: "center",
   },
-  detailsBtnText: {
+  detailsText: {
     color: "#4E342E",
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  homeBtn: {
+    marginTop: 10,
+    backgroundColor: "#00796B",
+    borderRadius: 14,
+    padding: 14,
+    alignItems: "center",
+  },
+  homeBtnText: {
+    color: "#fff",
     fontWeight: "700",
     fontSize: 16,
   },
-
-  homeBtn: {
-    backgroundColor: "#00796B",
-    padding: 16,
-    borderRadius: 14,
+  center: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    marginTop: 12,
-    elevation: 3,
   },
-  homeBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
-
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });
- 
