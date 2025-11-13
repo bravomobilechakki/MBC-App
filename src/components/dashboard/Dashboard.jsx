@@ -27,7 +27,7 @@ const Dashboard = ({ navigation }) => {
   useEffect(() => {
     const animateVan = () => {
       vanTranslateX.setValue(400); // reset to right side
-      Animated.timing(vanTranslateX, {
+      Animated.timing(vanTranslateX, { 
         toValue: -200, // move across to left
         duration: 4000,
         easing: Easing.linear,

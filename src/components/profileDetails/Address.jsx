@@ -203,12 +203,6 @@ const Address = () => {
                     <Text style={[styles.actionText, { color: "red" }]}>Delete</Text>
                   </TouchableOpacity>
                 </View>
-
-                <view>
-                  <text> 
-
-                  </text>
-                </view>
               </TouchableOpacity>
             ))
           ) : (

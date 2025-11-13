@@ -19,8 +19,7 @@ const Payment = () => {
   const route = useRoute();
   const { token, user } = useContext(UserContext);
 
-  // ✅ Safe fallback for route params
-  const { selectedItems = [], totalAmount = 0 } = route.params || {};
+  const { selectedItems = [], totalAmount = 0, address } = route.params || {};
 
   const [selectedPayment, setSelectedPayment] = useState("COD");
 
@@ -48,12 +47,12 @@ const Payment = () => {
           image: item.product.images?.[0],
         })),
         shippingAddress: {
-          street: user?.address?.street || "Default Street",
-          city: user?.address?.city || "Your City",
-          state: user?.address?.state || "Your State",
-          zipCode: user?.address?.zipCode || "000000",
-          country: "India",
-          isDefault: true,
+          street: address?.street || "Default Street",
+          city: address?.city || "Your City",
+          state: address?.state || "Your State",
+          zipCode: address?.zipCode || "000000",
+          country: address?.country || "India",
+          isDefault: address?.isDefault || false,
         },
         paymentMethod: selectedPayment,
         paymentInfo: {

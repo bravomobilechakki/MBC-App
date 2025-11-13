@@ -17,6 +17,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
 import LinearGradient from "react-native-linear-gradient";
+import * as Animatable from "react-native-animatable";
 import SummaryApi from "../../../common";
 import { UserContext } from "../../../context/UserContext";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -39,7 +40,6 @@ const VenueBooking = () => {
 
   // ✅ Animation modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const scaleAnim = useRef(new Animated.Value(0)).current;
 
   const scales = useRef({}).current;
 
@@ -100,17 +100,6 @@ const VenueBooking = () => {
     return true;
   };
 
-  const showSuccessAnimation = () => {
-    setShowSuccessModal(true);
-    scaleAnim.setValue(0);
-    Animated.spring(scaleAnim, { toValue: 1, friction: 5, useNativeDriver: true }).start();
-
-    setTimeout(() => {
-      setShowSuccessModal(false);
-      navigation.navigate("BookingOrder");
-    }, 2000);
-  };
-
   const handleBooking = async () => {
     if (!validate()) return;
 
@@ -139,7 +128,11 @@ const VenueBooking = () => {
       });
 
       if (res.data?.success) {
-        showSuccessAnimation();
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          navigation.navigate("BookingOrder");
+        }, 2000);
       } else {
         Alert.alert("Error", res.data?.message || "Unexpected server response.");
       }
@@ -254,13 +247,23 @@ const VenueBooking = () => {
       </TouchableOpacity>
 
       {/* ✅ Success Modal */}
-      <Modal transparent visible={showSuccessModal} animationType="fade">
+      <Modal transparent visible={showSuccessModal}>
         <View style={styles.modalOverlay}>
-          <Animated.View style={[styles.modalContent, { transform: [{ scale: scaleAnim }] }]}>
-            <Ionicons name="checkmark-circle" size={80} color="#4BB543" />
-            <Text style={styles.modalText}>Booking Confirmed!</Text>
-            <Text style={styles.modalSubText}>Thank you for your booking ✅</Text>
-          </Animated.View>
+          <Animatable.View
+            animation="bounceIn"
+            duration={800}
+            style={styles.modalContent}
+          >
+            <Animatable.View animation="pulse" easing="ease-out" iterationCount="infinite">
+              <Ionicons name="checkmark-circle" size={80} color="#4BB543" />
+            </Animatable.View>
+            <Animatable.Text animation="fadeInUp" delay={200} style={styles.modalText}>
+              Booking Confirmed!
+            </Animatable.Text>
+            <Animatable.Text animation="fadeInUp" delay={400} style={styles.modalSubText}>
+              Thank you for your booking ✅
+            </Animatable.Text>
+          </Animatable.View>
         </View>
       </Modal>
     </ScrollView>

@@ -32,7 +32,6 @@ const BookingOrder = () => {
   const slideAnim = useRef(new Animated.Value(50)).current;
   const marqueeAnim = useRef(new Animated.Value(0)).current;
 
-  // Header fade-in
   const startAnimations = () => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -50,7 +49,6 @@ const BookingOrder = () => {
     ]).start();
   };
 
-  // Moving marquee text
   const startMarquee = () => {
     Animated.loop(
       Animated.sequence([
@@ -78,7 +76,6 @@ const BookingOrder = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.data.success) {
-        // Sort bookings: newest first, cancelled last
         const sorted = res.data.data.sort((a, b) => {
           if (a.status === "cancelled" && b.status !== "cancelled") return 1;
           if (b.status === "cancelled" && a.status !== "cancelled") return -1;
@@ -135,7 +132,9 @@ const BookingOrder = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#00897B" />
-        <Text style={{ color: "#00695C", marginTop: 8 }}>Fetching your bookings...</Text>
+        <Text style={{ color: "#00695C", marginTop: 8 }}>
+          Fetching your bookings...
+        </Text>
       </View>
     );
 
@@ -164,87 +163,112 @@ const BookingOrder = () => {
   };
 
   return (
-    <Animated.ScrollView
-      style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
-      contentContainerStyle={{ paddingBottom: 50 }}
-    >
-      {/* Header Banner */}
-      <View style={styles.headerBanner}>
-        <Image
-          source={require("../../../images/delivery-van.png")}
-          style={styles.vanImage}
-          resizeMode="contain"
-        />
-        <Text style={styles.bannerTitle}>My Bookings</Text>
-        <Text style={styles.bannerSubtitle}>Track & manage  your service requests</Text>
-
-        {/* Moving marquee text */}
-        <View style={styles.marqueeContainer}>
-          <Animated.Text
-            style={[
-              styles.marqueeText,
-              { transform: [{ translateX: marqueeAnim }] },
-            ]}
-          >
-            🚚 Your comfort is on the way 🚚
-          </Animated.Text>
-        </View>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>My Bookings</Text>
       </View>
+      <Animated.ScrollView
+        style={[{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
+        contentContainerStyle={{ paddingBottom: 50 }}
+      >
+        {/* Header Banner */}
+        <View style={styles.headerBanner}>
+          <Image
+            source={require("../../../images/delivery-van.png")}
+            style={styles.vanImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.bannerTitle}>My Bookings</Text>
+          <Text style={styles.bannerSubtitle}>Track & manage your service requests</Text>
 
-      {/* Booking Cards */}
-      {bookings.map((booking) => {
-        const bookingDate = new Date(booking.date);
-        const date = bookingDate.toLocaleDateString();
-        const time = bookingDate.toLocaleTimeString();
-        const color = getStatusColor(booking.status);
+          <View style={styles.marqueeContainer}>
+            <Animated.Text
+              style={[styles.marqueeText, { transform: [{ translateX: marqueeAnim }] }]}
+            >
+              🚚 Your comfort is on the way 🚚
+            </Animated.Text>
+          </View>
+        </View>
 
-        return (
-          <Animated.View key={booking._id} style={[styles.card, { borderLeftColor: color }]}>
-            <View style={styles.cardTop}>
-              <View>
+        {/* Booking Cards */}
+        {bookings.map((booking) => {
+          const bookingDate = new Date(booking.date);
+          const date = bookingDate.toLocaleDateString();
+          const time = bookingDate.toLocaleTimeString();
+          const color = getStatusColor(booking.status);
+          const isCancelled = booking.status === "cancelled";
+
+          return (
+            <Animated.View
+              key={booking._id}
+              style={[
+                styles.card,
+                {
+                  borderLeftColor: color,
+                  backgroundColor: isCancelled ? "#f5f5f5" : "#FFFFFF",
+                  opacity: isCancelled ? 0.6 : 1,
+                },
+              ]}
+            >
+              <View style={styles.cardTop}>
                 <Text style={styles.service}>{booking.serviceType}</Text>
-                <Text style={styles.date}>{date} • {time}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: color + "20" }]}>
+                  <Text style={[styles.statusText, { color }]}>{booking.status}</Text>
+                </View>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: color + "20" }]}>
-                <Text style={[styles.statusText, { color }]}>{booking.status}</Text>
+
+              <Text style={styles.date}>
+                {date} • {time}
+              </Text>
+
+              <View style={styles.infoBlock}>
+                <Text style={styles.label}>{booking.name}</Text>
+                <Text style={styles.label}>{booking.mobile}</Text>
               </View>
-            </View>
 
-            <View style={styles.infoBlock}>
-              <Text style={styles.label}>👤 {booking.name}</Text>
-              <Text style={styles.label}>📞 {booking.mobile}</Text>
-            </View>
+              <View style={styles.actions}>
+                {!isCancelled ? (
+                  <>
+                    <TouchableOpacity
+                      style={styles.iconBtn}
+                      onPress={() => handleCancel(booking._id)}
+                      disabled={loadingCancelId === booking._id}
+                    >
+                      {loadingCancelId === booking._id ? (
+                        <ActivityIndicator color="#d32626ff" size="small" />
+                      ) : (
+                        <Ionicons name="close-circle-outline" size={26} color="#d32626ff" />
+                      )}
+                    </TouchableOpacity>
 
-            <View style={styles.actions}>
-              {booking.status !== "cancelled" && (
-                <TouchableOpacity
-                  style={styles.cancelBtn}
-                  onPress={() => handleCancel(booking._id)}
-                  disabled={loadingCancelId === booking._id}
-                >
-                  {loadingCancelId === booking._id ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <Text style={styles.cancelText}>Cancel</Text>
-                  )}
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={styles.detailsBtn}
-                onPress={() => navigation.navigate("OrderDetails", { booking })}
-              >
-                <Ionicons name="wallet-outline" size={18} color="#fff" />
-                <Text style={styles.detailsText}> Coins</Text>
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        );
-      })}
+                    <TouchableOpacity
+                      style={styles.coinsBtn}
+                      onPress={() => navigation.navigate("Wallet", { booking })}
+                    >
+                      <Text style={styles.coinsText}>💰 Coins</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <Text style={styles.cancelNote}>✖️ Booking Cancelled</Text>
+                )}
+              </View>
+            </Animated.View>
+          );
+        })}
 
-      <TouchableOpacity style={styles.homeBtn} onPress={() => navigation.navigate("Home")}>
-        <Text style={styles.homeBtnText}>🏠 Back to Home</Text>
-      </TouchableOpacity>
-    </Animated.ScrollView>
+        {/* Back to Dashboard Button */}
+        <TouchableOpacity
+          style={styles.dashboardBtn}
+          onPress={() => navigation.navigate("Dashboard")}
+        >
+          <Ionicons name="home-outline" size={22} color="#fff" />
+          <Text style={styles.dashboardBtnText}> Back to Dashboard</Text>
+        </TouchableOpacity>
+      </Animated.ScrollView>
+    </View>
   );
 };
 
@@ -254,126 +278,150 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#E0F7FA",
+    padding: 10,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
+    backgroundColor: "#E0F7FA",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    marginLeft: 12,
+    color: "#333",
   },
   headerBanner: {
     alignItems: "center",
-    backgroundColor: "#00ACC1",
-    padding: 24,
-    borderRadius: 18,
-    marginBottom: 20,
+    backgroundColor: "#047857",
+    padding: 6,
+    borderRadius: 16,
+    marginBottom: 14,
   },
   vanImage: {
-    width: 80,
-    height: 50,
-    marginBottom: 8,
+    width: 50,
+    height: 35,
+    marginBottom: 6,
   },
   bannerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     color: "#fff",
     fontWeight: "800",
   },
   bannerSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#E0F2F1",
-    marginBottom: 6,
   },
   marqueeContainer: {
     overflow: "hidden",
-    height: 25,
+    height: 20,
     width: "100%",
-    marginTop: 6,
+    marginTop: 4,
   },
   marqueeText: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#FFFFFF",
     fontWeight: "600",
   },
   card: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 18,
-    elevation: 3,
-    borderLeftWidth: 6,
+    borderRadius: 14,
+    padding: 10,
+    marginBottom: 12,
+    elevation: 2,
+    borderLeftWidth: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
   },
   cardTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 4,
   },
   service: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: "700",
     color: "#004D40",
   },
   date: {
-    fontSize: 13,
-    color: "#607D8B",
+    fontSize: 12,
+    color: "#283338ff",
+    marginBottom: 6,
   },
   statusBadge: {
     borderRadius: 8,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
   },
   statusText: {
     fontWeight: "700",
-    fontSize: 13,
+    fontSize: 12,
     textTransform: "capitalize",
   },
   infoBlock: {
-    marginTop: 14,
     backgroundColor: "#E0F2F1",
-    padding: 12,
-    borderRadius: 10,
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 6,
   },
   label: {
-    fontSize: 14,
-    color: "#004D40",
+    fontSize: 13,
+    color: "#040808ff",
     fontWeight: "600",
   },
   actions: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 16,
+    alignItems: "center",
+    marginTop: 8,
   },
-  cancelBtn: {
-    flex: 0.45,
-    backgroundColor: "#D32F2F",
-    borderRadius: 10,
-    paddingVertical: 10,
+  iconBtn: {
+    borderRadius: 50,
+    width: 36,
+    height: 36,
+    justifyContent: "center",
     alignItems: "center",
   },
-  cancelText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 15,
-  },
-  detailsBtn: {
-    flex: 0.45,
-    backgroundColor: "#FFC107",
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: "center",
+  coinsBtn: {
     flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#dd9716ff",
+    paddingVertical: 6,
+    width: 220,
+    borderRadius: 25,
     justifyContent: "center",
   },
-  detailsText: {
-    color: "#4E342E",
-    fontWeight: "700",
+  coinsText: {
+    color: "#fff",
     fontSize: 15,
+    fontWeight: "600",
   },
-  homeBtn: {
-    marginTop: 10,
+  cancelNote: {
+    fontSize: 14,
+    color: "#d32626ff",
+    fontWeight: "700",
+    textAlign: "center",
+    flex: 1,
+  },
+  dashboardBtn: {
+    marginTop: 12,
     backgroundColor: "#00796B",
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
+    alignSelf: "center",
+    width: "85%",
   },
-  homeBtnText: {
+  dashboardBtnText: {
     color: "#fff",
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: 15,
   },
   center: {
     flex: 1,

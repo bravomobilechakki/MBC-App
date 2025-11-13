@@ -46,7 +46,7 @@ export default function OrderDoneAnimated() {
     ]).start(() => {
       // Animation complete, navigate to Orders page
       setTimeout(() => {
-        navigation.replace('Orders');
+        navigation.replace('Profile');
       }, 1000); // Navigate after 1 second
     });
   }, []);

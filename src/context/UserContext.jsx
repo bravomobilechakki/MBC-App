@@ -5,7 +5,7 @@ import { fetchUserProfile as fetchUserProfileApi } from './UserActions';
 const UserContext = createContext();
 
 const UserProvider = ({ children }) => {
-  const [user, setUser] = useState({ coins: 0 });
+  const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
 
   const fetchUserProfile = async () => {

@@ -1,6 +1,9 @@
-const backendDomain = "https://mbc-backend-16697290.asia-south2.run.app";
+// const backendDomain = "https://mbc-backend-16697290.asia-south2.run.app";
+const backendDomain = "http://10.0.2.2:8080";
+
 
 const SummaryApi = {
+  // Authentication
   // Authentication
   signUP: { url: `${backendDomain}/api/signup`, method: "post" },
   logIn: { url: `${backendDomain}/api/login`, method: "post" },
@@ -21,7 +24,7 @@ const SummaryApi = {
     method: "delete",
   }),
  
-  // Products & Categories
+  // Products & Categoriesc
   getProducts: { url: `${backendDomain}/api/products`, method: "get" },
   getCategorys: { url: `${backendDomain}/api/categories`, method: "get" },                                                                                                                                                                                                                                                                                                                                                                                                                     
 

@@ -138,7 +138,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Notifications" component={Notifications} />
       <Stack.Screen name="PrivacyPolicy" component={Policy} />
       <Stack.Screen name="Support" component={Support} />
-       <Stack.Screen name="contectus" component={Contectus} />
+       <Stack.Screen name="Contectus" component={Contectus} />
       <Stack.Screen name="UpdateProfile" component={UpdateProfile} />
 
       {/* Auth Screens */}
