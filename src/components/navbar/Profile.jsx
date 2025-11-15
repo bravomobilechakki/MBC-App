@@ -113,11 +113,10 @@ const Profile = () => {
               onPress={() => navigation.navigate('Address')}
               requiresAuth={true}
             />
-            <Option
-              icon="person-circle-outline"
-              label="Update Profile"
-              onPress={() => navigation.navigate('UpdateProfile')}
-              requiresAuth={true}
+          <Option
+              icon="call-outline"
+              label="Contact Us"
+              onPress={() => navigation.navigate('Contectus')}
             />
           </Animatable.View>
 
@@ -142,10 +141,11 @@ const Profile = () => {
               label="Help & Support"
               onPress={() => navigation.navigate('Support')}
             />
-            <Option
-              icon="call-outline"
-              label="Contact Us"
-              onPress={() => navigation.navigate('contectus')}
+          <Option
+              icon="person-circle-outline"
+              label="Update Profile"
+              onPress={() => navigation.navigate('UpdateProfile')}
+              requiresAuth={true}
             />
           </Animatable.View>
 

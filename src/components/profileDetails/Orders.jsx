@@ -73,9 +73,8 @@ const Orders = () => {
   // ✅ Render each order card
   const renderItem = ({ item }) => {
     const totalAmount =
-      item.totalAmount ||
       item.orderItems.reduce(
-        (sum, i) => sum + (i.price || 0) * (i.quantity || 1),
+        (sum, i) => sum + (i.sellingPrice || i.price || 0) * (i.quantity),
         0
       );
 

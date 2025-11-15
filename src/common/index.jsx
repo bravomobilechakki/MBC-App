@@ -1,7 +1,7 @@
 // const backendDomain = "https://mbc-backend-16697290.asia-south2.run.app";
-const backendDomain = "http://10.0.2.2:8080";
+const backendDomain = "http://192.168.1.18:8080";
 
-
+ 
 const SummaryApi = {
   // Authentication
   // Authentication

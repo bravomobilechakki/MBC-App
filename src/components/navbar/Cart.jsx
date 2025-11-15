@@ -86,7 +86,7 @@ const CartItem = ({
 
       <View style={styles.info}>
         <Text style={styles.name}>{truncate(item.product.name, 14)}</Text>
-        <Text style={styles.price}>₹{item.product.price}</Text>
+        <Text style={styles.price}>₹{item.product.sellingPrice}</Text>
         <View style={styles.quantityRow}>
           <TouchableOpacity onPress={() => decreaseQty(item._id)}>
             <Ionicons name="remove-circle-outline" size={22} color="#ff4d4d" />
@@ -225,7 +225,7 @@ const Cart = () => {
   const getSubtotal = () =>
     cart
       .filter((item) => selectedItems.includes(item._id) && item.product)
-      .reduce((total, item) => total + item.product.price * item.quantity, 0);
+      .reduce((total, item) => total + item.product.sellingPrice * item.quantity, 0);
 
   const deliveryCharge = 0;
   const getTotal = () => Math.max(getSubtotal() + deliveryCharge - couponDiscount, 0);

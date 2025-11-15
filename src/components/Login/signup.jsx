@@ -111,7 +111,7 @@ const SignUp = ({ navigation }) => {
           mobile,
           otp,
           name,
-          address: {
+          addresses: [{
             mode: 'manual',
             manualAddress: {
               street,
@@ -121,7 +121,7 @@ const SignUp = ({ navigation }) => {
               country: 'India',
               isDefault: true,
             },
-          },
+          }],
         }),
       });
       const result = await response.json();

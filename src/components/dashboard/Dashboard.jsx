@@ -14,7 +14,6 @@ import {
 } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 import Svg, { Path } from "react-native-svg";
-import * as Animatable from "react-native-animatable";
 import SummaryApi from "../../common";
 
 const Dashboard = ({ navigation }) => {
@@ -23,11 +22,15 @@ const Dashboard = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const vanTranslateX = useRef(new Animated.Value(400)).current; // start from right
 
-  // 🚐 Move van continuously right → left
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+
+  // Animate van and component entrance
   useEffect(() => {
     const animateVan = () => {
       vanTranslateX.setValue(400); // reset to right side
-      Animated.timing(vanTranslateX, { 
+      Animated.timing(vanTranslateX, {
         toValue: -200, // move across to left
         duration: 4000,
         easing: Easing.linear,
@@ -35,9 +38,23 @@ const Dashboard = ({ navigation }) => {
       }).start(() => animateVan()); // loop forever
     };
     animateVan();
-  }, [vanTranslateX]);
 
-  // ✅ Fetch categories
+    // Entrance animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [vanTranslateX, fadeAnim, slideAnim]);
+
+  // Fetch categories
   const loadDashboard = async () => {
     setLoadingCategories(true);
     try {
@@ -72,12 +89,16 @@ const Dashboard = ({ navigation }) => {
     loadDashboard();
   };
 
-  // ✅ Improved WhatsApp function
+  // Improved WhatsApp function
   const openWhatsAppOrder = async () => {
     const phoneNumber = "7568207000";
     const message = "I'd like to place an order.";
-    const appURL = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
-    const webURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    const appURL = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(
+      message
+    )}`;
+    const webURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+      message
+    )}`;
 
     try {
       const supported = await Linking.canOpenURL(appURL);
@@ -88,18 +109,21 @@ const Dashboard = ({ navigation }) => {
       }
     } catch (error) {
       console.error("Error opening WhatsApp:", error);
-      Alert.alert("WhatsApp Error", "Unable to open WhatsApp. Please try again.");
+      Alert.alert(
+        "WhatsApp Error",
+        "Unable to open WhatsApp. Please try again."
+      );
     }
   };
 
-  // ✅ Navigate to Booking
+  // Navigate to Booking
   const handleBookVen = () => {
     navigation.navigate("Booking");
   };
 
   return (
-    <ScrollView
-      style={styles.container}
+    <Animated.ScrollView
+      style={[styles.container, { opacity: fadeAnim }]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -109,124 +133,152 @@ const Dashboard = ({ navigation }) => {
       }
     >
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>🌟 All Featured</Text>
-        <View style={styles.sortFilter}>
-          <TouchableOpacity
-            onPress={openWhatsAppOrder}
-            activeOpacity={0.7}
-            style={styles.whatsappButton}
-          >
-            <Image
-              source={require("../../images/whatsapp.png")}
-              style={styles.menuIcon}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
+      <Animated.View
+        style={{
+          transform: [{ translateY: slideAnim }],
+        }}
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerText}>🌟 All Featured</Text>
+          <View style={styles.sortFilter}>
+            <TouchableOpacity
+              onPress={openWhatsAppOrder}
+              activeOpacity={0.7}
+              style={styles.whatsappButton}
+            >
+              <Image
+                source={require("../../images/whatsapp.png")}
+                style={styles.menuIcon}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
 
-          <TouchableOpacity style={styles.filterBtn}>
-            <Text>Filter ⏳</Text>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.filterBtn}>
+              <Text>Filter ⏳</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </Animated.View>
 
       {/* Categories */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categories}
+      <Animated.View
+        style={{
+          transform: [{ translateY: slideAnim }],
+        }}
       >
-        {loadingCategories ? (
-          <ActivityIndicator size="small" color="#007bff" />
-        ) : categories.length > 0 ? (
-          categories.map((cat) => (
-            <TouchableOpacity
-              key={cat._id}
-              style={styles.categoryItem}
-              onPress={() =>
-                navigation.navigate("ProductsPage", { categoryId: cat._id })
-              }
-            >
-              <Image source={{ uri: cat.image }} style={styles.categoryImage} />
-              <Text style={styles.categoryText}>{cat.name}</Text>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <Text style={{ color: "#888" }}>No categories found</Text>
-        )}
-      </ScrollView>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categories}
+        >
+          {loadingCategories ? (
+            <ActivityIndicator size="small" color="#007bff" />
+          ) : categories.length > 0 ? (
+            categories.map((cat, index) => (
+              <Animated.View
+                key={cat._id}
+                style={{
+                  opacity: fadeAnim,
+                  transform: [
+                    {
+                      translateY: slideAnim.interpolate({
+                        inputRange: [0, 50],
+                        outputRange: [0, 50 + index * 10],
+                      }),
+                    },
+                  ],
+                }}
+              >
+                <TouchableOpacity
+                  style={styles.categoryItem}
+                  onPress={() =>
+                    navigation.navigate("ProductsPage", { categoryId: cat._id })
+                  }
+                >
+                  <Image
+                    source={{ uri: cat.image }}
+                    style={styles.categoryImage}
+                  />
+                  <Text style={styles.categoryText}>{cat.name}</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            ))
+          ) : (
+            <Text style={{ color: "#888" }}>No categories found</Text>
+          )}
+        </ScrollView>
+      </Animated.View>
 
       {/* Offer Banner */}
-      <View style={styles.offerCard}>
-        <Text style={styles.offerTitle}>10-20% OFF</Text>
-        <Text style={styles.offerSub}>Now in (product)</Text>
-        <Text style={styles.offerSub}>Multi Grain Flour</Text>
-        <TouchableOpacity style={styles.shopNowBtn}>
-          <Text style={styles.shopNowText}>🛍️ Shop Now →</Text>
-        </TouchableOpacity>
-      </View>
+      <Animated.View
+        style={{
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }}
+      >
+        <View style={styles.offerCard}>
+          <Text style={styles.offerTitle}>10-20% OFF</Text>
+          <Text style={styles.offerSub}>Now in (product)</Text>
+          <Text style={styles.offerSub}>Multi Grain Flour</Text>
+          <TouchableOpacity style={styles.shopNowBtn}>
+            <Text style={styles.shopNowText}>🛍️ Shop Now →</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
 
       {/* 🏛️ Deal of the Day Section */}
-      <Animatable.View
-        animation="fadeInUp"
-        duration={800}
-        delay={100}
-        style={styles.dealCard}
+      <Animated.View
+        style={{
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }}
       >
-        <Animatable.View animation="fadeIn" delay={300} style={{ flex: 1 }}>
-          <View style={styles.titleContainer}>
-            <View style={styles.titleHighlight} />
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Animatable.Text
-                animation="pulse"
-                easing="ease-out"
-                iterationCount="infinite"
-                style={styles.dealTitle}
-              >
-                Book Your Van
-              </Animatable.Text>
+        <View style={styles.dealCard}>
+          <View style={{ flex: 1 }}>
+            <View style={styles.titleContainer}>
+              <View style={styles.titleHighlight} />
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={styles.dealTitle}>Book Your Van</Text>
 
-              {/* 🚐 Animated Van */}
-              <Animated.View
-                style={[
-                  { transform: [{ translateX: vanTranslateX }, { scaleX: 1 }] },
-                  { position: "absolute", zIndex: 10, top: -20, left: 0 },
-                ]}
-              >
-                <Animatable.View
-                  animation="swing"
-                  iterationCount="infinite"
-                  duration={15000}
+                {/* 🚐 Animated Van */}
+                <Animated.View
+                  style={[
+                    {
+                      transform: [
+                        { translateX: vanTranslateX },
+                        { scaleX: 1 },
+                      ],
+                    },
+                    { position: "absolute", zIndex: 10, top: -20, left: 0 },
+                  ]}
                 >
                   <Animated.Image
                     source={require("../../images/delivery-van.png")}
                     style={{ width: 30, height: 30, marginBottom: 3 }}
                     resizeMode="contain"
                   />
-                </Animatable.View>
-              </Animated.View>
+                </Animated.View>
+              </View>
+
+              <Text style={styles.dealSubText}>
+                Premium grinding & delivery service
+              </Text>
             </View>
 
-            <Text style={styles.dealSubText}>
-              Premium grinding & delivery service
-            </Text>
-          </View>
-
-          {/* Zigzag mini buttons */}
-          <View style={styles.miniBtnContainer}>
-            {[
-              { text: "🌾 Free Grinding", color: "#a50d0dff" },
-              { text: "🚚 Free Delivery", color: "#8b0000ff" },
-            ].map((item, index) => (
-              <Animatable.View
-                key={index}
-                animation="pulse"
-                iterationCount="infinite"
-                duration={1500 + index * 300}
-              >
+            {/* Zigzag mini buttons */}
+            <View style={styles.miniBtnContainer}>
+              {[
+                { text: "🌾 Free Grinding", color: "#a50d0dff" },
+                { text: "🚚 Free Delivery", color: "#8b0000ff" },
+                
+              ].map((item, index) => (
                 <TouchableOpacity
+                  key={index}
                   activeOpacity={0.8}
-                  style={[styles.zigzagButton, { shadowColor: item.color }]}
+                  style={[
+                    styles.zigzagButton,
+                    { shadowColor: item.color },
+                  ]}   
                 >
                   <Svg
                     height="35"
@@ -241,20 +293,12 @@ const Dashboard = ({ navigation }) => {
                   </Svg>
                   <Text style={styles.zigzagText}>{item.text}</Text>
                 </TouchableOpacity>
-              </Animatable.View>
-            ))}
+              ))}
+            </View>
           </View>
-        </Animatable.View>
 
-        {/* Book Van Button */}
-        <View style={styles.actionsColumn}>
-          <Animatable.View
-            animation="bounceIn"
-            delay={600}
-            iterationCount="infinite"
-            direction="alternate"
-            duration={2500}
-          >
+          {/* Book Van Button */}
+          <View style={styles.actionsColumn}>
             <TouchableOpacity
               activeOpacity={0.85}
               style={styles.venButton}
@@ -264,10 +308,10 @@ const Dashboard = ({ navigation }) => {
                 <Text style={styles.venLabel}>Book Your Van →</Text>
               </View>
             </TouchableOpacity>
-          </Animatable.View>
+          </View>
         </View>
-      </Animatable.View>
-    </ScrollView>
+      </Animated.View>
+    </Animated.ScrollView>
   );
 };
 

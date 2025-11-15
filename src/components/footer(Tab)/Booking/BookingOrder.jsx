@@ -202,60 +202,84 @@ const BookingOrder = () => {
           const isCancelled = booking.status === "cancelled";
 
           return (
-            <Animated.View
+            <TouchableOpacity
               key={booking._id}
-              style={[
-                styles.card,
-                {
-                  borderLeftColor: color,
-                  backgroundColor: isCancelled ? "#f5f5f5" : "#FFFFFF",
-                  opacity: isCancelled ? 0.6 : 1,
-                },
-              ]}
+              onPress={() =>
+                navigation.navigate("BookingOrderDetails", { booking })
+              }
             >
-              <View style={styles.cardTop}>
-                <Text style={styles.service}>{booking.serviceType}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: color + "20" }]}>
-                  <Text style={[styles.statusText, { color }]}>{booking.status}</Text>
+              <Animated.View
+                style={[
+                  styles.card,
+                  {
+                    borderLeftColor: color,
+                    backgroundColor: isCancelled ? "#f5f5f5" : "#FFFFFF",
+                    opacity: isCancelled ? 0.6 : 1,
+                  },
+                ]}
+              >
+                <View style={styles.cardTop}>
+                  <Text style={styles.service}>{booking.serviceType}</Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      { backgroundColor: color + "20" },
+                    ]}
+                  >
+                    <Text style={[styles.statusText, { color }]}>
+                      {booking.status}
+                    </Text>
+                  </View>
                 </View>
-              </View>
 
-              <Text style={styles.date}>
-                {date} • {time}
-              </Text>
+                <Text style={styles.date}>
+                  {date} • {time}
+                </Text>
 
-              <View style={styles.infoBlock}>
-                <Text style={styles.label}>{booking.name}</Text>
-                <Text style={styles.label}>{booking.mobile}</Text>
-              </View>
+                <View style={styles.infoBlock}>
+                  <Text style={styles.label}>{booking.name}</Text>
+                  <Text style={styles.label}>{booking.mobile}</Text>
+                </View>
 
-              <View style={styles.actions}>
-                {!isCancelled ? (
-                  <>
-                    <TouchableOpacity
-                      style={styles.iconBtn}
-                      onPress={() => handleCancel(booking._id)}
-                      disabled={loadingCancelId === booking._id}
-                    >
-                      {loadingCancelId === booking._id ? (
-                        <ActivityIndicator color="#d32626ff" size="small" />
-                      ) : (
-                        <Ionicons name="close-circle-outline" size={26} color="#d32626ff" />
-                      )}
-                    </TouchableOpacity>
+                <View style={styles.actions}>
+                  {!isCancelled ? (
+                    <>
+                      <TouchableOpacity
+                        style={styles.iconBtn}
+                        onPress={() => handleCancel(booking._id)}
+                        disabled={loadingCancelId === booking._id}
+                      >
+                        {loadingCancelId === booking._id ? (
+                          <ActivityIndicator
+                            color="#d32626ff"
+                            size="small"
+                          />
+                        ) : (
+                          <Ionicons
+                            name="close-circle-outline"
+                            size={26}
+                            color="#d32626ff"
+                          />
+                        )}
+                      </TouchableOpacity>
 
-                    <TouchableOpacity
-                      style={styles.coinsBtn}
-                      onPress={() => navigation.navigate("Wallet", { booking })}
-                    >
-                      <Text style={styles.coinsText}>💰 Coins</Text>
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <Text style={styles.cancelNote}>✖️ Booking Cancelled</Text>
-                )}
-              </View>
-            </Animated.View>
+                      <TouchableOpacity
+                        style={styles.coinsBtn}
+                        onPress={() =>
+                          navigation.navigate("Wallet", { booking })
+                        }
+                      >
+                        <Text style={styles.coinsText}>💰 Coins</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    <Text style={styles.cancelNote}>
+                      ✖️ Booking Cancelled
+                    </Text>
+                  )}
+                </View>
+              </Animated.View>
+            </TouchableOpacity>
           );
         })}
 

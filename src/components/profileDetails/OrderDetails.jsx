@@ -8,12 +8,22 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  LayoutAnimation,
+  UIManager,
+  Platform,
 } from "react-native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
 import SummaryApi from "../../common";
 import { UserContext } from "../../context/UserContext";
+
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const OrderDetails = () => {
   const navigation = useNavigation();
@@ -26,6 +36,11 @@ const OrderDetails = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, []);
+
+  // Fetch order details if needed
+  useEffect(() => {
     if (!order && route.params?.orderId) {
       const fetchDetails = async () => {
         setLoading(true);
@@ -36,6 +51,7 @@ const OrderDetails = () => {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
+
           if (response.data.success) {
             setOrderDetails(response.data.data);
           } else {
@@ -43,7 +59,6 @@ const OrderDetails = () => {
           }
         } catch (err) {
           setError("Something went wrong while fetching order details.");
-          console.error(err);
         } finally {
           setLoading(false);
         }
@@ -52,128 +67,124 @@ const OrderDetails = () => {
     }
   }, [order, route.params?.orderId, token]);
 
-  if (loading) {
+  if (loading)
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#6A1B9A" />
       </View>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error}</Text>
       </View>
     );
-  }
 
-  if (!orderDetails) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>Order details not found.</Text>
-      </View>
-    );
-  }
-
+  // SAFE DESTRUCTURE (prevents map undefined)
   const {
-    _id,
+    _id = "",
     orderItems = [],
-    totalAmount: apiTotal,
-    shippingAddress,
-    paymentMethod,
-    createdAt,
-    status,
-  } = orderDetails;
+    shippingAddress = {},
+    paymentMethod = "",
+    createdAt = "",
+    status = "",
+  } = orderDetails || {};
 
-  const totalAmount =
-    apiTotal ||
-    orderItems.reduce(
-      (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
-      0
-    );
+  // Calculate totals
+  const totalAmount = orderItems.reduce(
+    (sum, item) =>
+      sum + (item.sellingPrice || item.price || 0) * (item.quantity || 1),
+    0
+  );
 
   const statusSteps = ["Processing", "Shipped", "Delivered"];
   const activeStep = statusSteps.indexOf(status);
 
+  const getStatusColor = (s) =>
+    s === "Processing"
+      ? "#F57C00"
+      : s === "Shipped"
+      ? "#1976D2"
+      : s === "Delivered"
+      ? "#388E3C"
+      : "#757575";
+
+  const truncate = (str, n) =>
+    str?.length > n ? str.substr(0, n - 1) + "..." : str;
+
   return (
     <View style={styles.container}>
-      {/* 🔙 Header */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color="#251f1fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Order Details</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 🧾 Order Summary */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="receipt-outline" size={20} color="#2e7d32" />
-            <Text style={styles.sectionTitle}>Order Summary</Text>
+        {/* Order Summary */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardTitle}>Order Summary</Text>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: getStatusColor(status) },
+              ]}
+            >
+              <Text style={styles.statusText}>{status}</Text>
+            </View>
           </View>
 
           <View style={styles.detailRow}>
-            <Ionicons name="pricetag-outline" size={18} color="#555" />
-            <Text style={styles.label}>Order ID:</Text>
-            <Text style={styles.value}>{_id}</Text>
+            <Text style={styles.label}>Order ID</Text>
+            <Text style={styles.value}>#{_id.slice(-8)}</Text>
           </View>
+
           <View style={styles.detailRow}>
-            <Ionicons name="calendar-outline" size={18} color="#555" />
-            <Text style={styles.label}>Order Date:</Text>
+            <Text style={styles.label}>Date</Text>
             <Text style={styles.value}>
-              {new Date(createdAt).toLocaleDateString()}
+              {createdAt
+                ? new Date(createdAt).toLocaleDateString()
+                : "Not available"}
             </Text>
           </View>
+
           <View style={styles.detailRow}>
-            <Ionicons name="cube-outline" size={18} color="#555" />
-            <Text style={styles.label}>Status:</Text>
-            <Text style={[styles.value, { color: "#2e7d32" }]}>{status}</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <Ionicons name="cash-outline" size={18} color="#555" />
-            <Text style={styles.label}>Total Amount:</Text>
-            <Text style={styles.value}>₹{totalAmount.toFixed(2)}</Text>
+            <Text style={styles.label}>Total</Text>
+            <Text style={styles.totalValue}>₹{totalAmount.toFixed(2)}</Text>
           </View>
         </View>
 
-        {/* 📍 Order Progress */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="trail-sign-outline" size={20} color="#2e7d32" />
-            <Text style={styles.sectionTitle}>Order Progress</Text>
-          </View>
-
+        {/* Progress */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Order Progress</Text>
           <View style={styles.progressContainer}>
             {statusSteps.map((step, index) => (
-              <View key={step} style={styles.stepContainer}>
-                <View
-                  style={[
-                    styles.circle,
-                    index <= activeStep && styles.circleActive,
-                  ]}
-                >
-                  <Ionicons
-                    name={
-                      index < activeStep
-                        ? "checkmark"
-                        : index === activeStep
-                        ? "ellipse"
-                        : "ellipse-outline"
-                    }
-                    size={16}
-                    color="#fff"
-                  />
+              <React.Fragment key={step}>
+                <View style={styles.stepContainer}>
+                  <View
+                    style={[
+                      styles.circle,
+                      index <= activeStep && styles.circleActive,
+                    ]}
+                  >
+                    {index < activeStep && (
+                      <Ionicons name="checkmark" size={18} color="#fff" />
+                    )}
+                  </View>
+                  <Text
+                    style={[
+                      styles.stepLabel,
+                      index <= activeStep && styles.stepLabelActive,
+                    ]}
+                  >
+                    {step}
+                  </Text>
                 </View>
-                <Text
-                  style={[
-                    styles.stepLabel,
-                    index <= activeStep && styles.stepLabelActive,
-                  ]}
-                >
-                  {step}
-                </Text>
+
                 {index < statusSteps.length - 1 && (
                   <View
                     style={[
@@ -182,109 +193,90 @@ const OrderDetails = () => {
                     ]}
                   />
                 )}
-              </View>
+              </React.Fragment>
             ))}
           </View>
         </View>
 
-        {/* 🛍️ Ordered Products */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Ionicons name="bag-handle-outline" size={20} color="#2e7d32" />
-            <Text style={styles.sectionTitle}>Ordered Products</Text>
-          </View>
+        {/* -------- Items (Clickable) -------- */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Items ({orderItems.length})</Text>
+
           {orderItems.map((item) => (
-            <View key={item._id} style={styles.productCard}>
-              <Image
-                source={{ uri: item.image }}
-                style={styles.productImage}
-                resizeMode="cover"
-              />
+            <TouchableOpacity
+              key={item._id}
+              style={styles.productCard}
+              onPress={() =>
+                navigation.navigate("ProductDetails", {
+                  productId: item.productId || item._id,
+                  product: item,
+                })
+              }
+            >
+              <Image source={{ uri: item.image }} style={styles.productImage} />
+
               <View style={styles.productInfo}>
-                <Text
-                  style={styles.productName}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {item.name}
+                <Text style={styles.productName}>
+                  {truncate(item.name, 20)}
                 </Text>
                 <Text style={styles.productQtyPrice}>
-                  Qty: {item.quantity} × ₹{item.price}
-                </Text>
-                <Text style={styles.productTotal}>
-                  ₹{(item.quantity * item.price).toFixed(2)}
+                  Qty: {item.quantity}
                 </Text>
               </View>
-            </View>
+
+              <Text style={styles.productTotal}>
+                ₹{(
+                  item.quantity * (item.sellingPrice || item.price)
+                ).toFixed(2)}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
 
-        {/* 🏠 Shipping Address */}
-        {shippingAddress && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="home-outline" size={20} color="#2e7d32" />
-              <Text style={styles.sectionTitle}>Shipping Address</Text>
-            </View>
-            <Text style={styles.addressText}>📍 {shippingAddress.street}</Text>
-            <Text style={styles.addressText}>
-              🏙️ {shippingAddress.city}, {shippingAddress.state} -{" "}
-              {shippingAddress.zipCode}
-            </Text>
-            <Text style={styles.addressText}>🌍 {shippingAddress.country}</Text>
-          </View>
-        )}
-
-        {/* 💳 Payment Info */}
-        {paymentMethod && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Ionicons name="card-outline" size={20} color="#2e7d32" />
-              <Text style={styles.sectionTitle}>Payment Method</Text>
-            </View>
-            <View style={styles.paymentRow}>
-              <Ionicons
-                name={
-                  paymentMethod.toLowerCase().includes("upi")
-                    ? "logo-google"
-                    : paymentMethod.toLowerCase().includes("card")
-                    ? "card-outline"
-                    : paymentMethod.toLowerCase().includes("cash")
-                    ? "cash-outline"
-                    : "wallet-outline"
-                }
-                size={22}
-                color="#2e7d32"
-                style={{ marginRight: 8 }}
-              />
-              <Text style={styles.paymentText}>
-                {paymentMethod.toLowerCase().includes("upi")
-                  ? "UPI Payment"
-                  : paymentMethod.toLowerCase().includes("card")
-                  ? "Card Payment"
-                  : paymentMethod.toLowerCase().includes("cash")
-                  ? "Cash on Delivery"
-                  : "Other Method"}
+        {/* Shipping */}
+        {shippingAddress?.street && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Shipping Address</Text>
+            <View style={styles.addressContainer}>
+              <Ionicons name="location-outline" size={18} color="#6A1B9A" />
+              <Text style={styles.addressText}>
+                {shippingAddress.street}, {shippingAddress.city},{" "}
+                {shippingAddress.state} - {shippingAddress.zipCode},{" "}
+                {shippingAddress.country}
               </Text>
             </View>
           </View>
         )}
 
-        {/* 🚀 Action Buttons */}
-        <View style={{ padding: 16 }}>
+        {/* Payment */}
+        {paymentMethod && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Payment Method</Text>
+            <View style={styles.paymentRow}>
+              <Ionicons name="card-outline" size={24} color="#6A1B9A" />
+              <Text style={styles.paymentText}>{paymentMethod}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Buttons */}
+        <View style={styles.actions}>
           <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() =>
-              Alert.alert("🚚 Track Order", "Tracking feature coming soon!")
-            }
+            style={[styles.button, styles.primaryButton]}
+            onPress={() => Alert.alert("🚚 Track Order", "Coming soon!")}
           >
-            <Ionicons
-              name="navigate-outline"
-              size={18}
-              color="#fff"
-              style={{ marginRight: 6 }}
-            />
-            <Text style={styles.actionButtonText}>Track Order</Text>
+            <Text style={[styles.buttonText, styles.primaryButtonText]}>
+              Track Order
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.secondaryButton]}
+            onPress={() => navigation.navigate("Support")}
+          >
+            <Text style={[styles.buttonText, styles.secondaryButtonText]}>
+              Get Help
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -294,127 +286,117 @@ const OrderDetails = () => {
 
 export default OrderDetails;
 
+/* ----------- Styles ----------- */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f8f8" },
+  container: { flex: 1, backgroundColor: "#F3E5F5" },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
     backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    elevation: 4,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: "bold",
+    color: "#1f1b1bff",
     marginLeft: 16,
-    color: "#333",
   },
   scrollContent: { padding: 16 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  errorText: { fontSize: 16, color: "red" },
-  section: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    elevation: 2,
+  card: {
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 11,
+    marginBottom: 16,
+    elevation: 3,
   },
-  sectionHeader: {
+  cardHeader: {
     flexDirection: "row",
-    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 10,
-    gap: 8,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+  cardTitle: { fontSize: 15, fontWeight: "bold", color: "#121414ff" },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
+  statusText: { color: "#FFF", fontSize: 9, fontWeight: "bold" },
   detailRow: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 6,
-    gap: 8,
-  },
-  label: { fontSize: 15, color: "#555", flex: 1 },
-  value: { fontSize: 15, fontWeight: "600", color: "#333", flex: 1 },
-  productCard: {
-    flexDirection: "row",
-    alignItems: "center",
     marginBottom: 10,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
   },
-  productImage: { width: 60, height: 60, borderRadius: 8, marginRight: 10 },
-  productInfo: { flex: 1 },
-  productName: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#333",
-    maxWidth: "90%",
-  },
-  productQtyPrice: { fontSize: 13, color: "#777", marginTop: 2 },
-  productTotal: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#2e7d32",
-    marginTop: 5,
-  },
-  addressText: { fontSize: 15, color: "#555", lineHeight: 22 },
+  label: { color: "#616161", fontSize: 14 },
+  value: { color: "#212121", fontSize: 14, fontWeight: "600" },
+  totalValue: { color: "#4A148C", fontSize: 16, fontWeight: "bold" },
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 10,
+    marginTop: 13,
   },
-  stepContainer: { alignItems: "center", flex: 1, position: "relative" },
+  stepContainer: { alignItems: "center", flex: 1 },
   circle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#ccc",
+    width: 15,
+    height: 15,
+    borderRadius: 16,
+    backgroundColor: "#E0E0E0",
+    borderWidth: 2,
+    borderColor: "#E0E0E0",
     justifyContent: "center",
     alignItems: "center",
   },
-  circleActive: { backgroundColor: "#2e7d32" },
-  stepLabel: { fontSize: 12, color: "#777", marginTop: 5 },
-  stepLabelActive: { color: "#2e7d32", fontWeight: "bold" },
+  circleActive: { backgroundColor: "#047857", borderColor: "#047857" },
+  stepLabel: { fontSize: 12, color: "#757575", marginTop: 8 },
+  stepLabelActive: { color: "#047857", fontWeight: "bold" },
   line: {
-    position: "absolute",
+    flex: 1,
     height: 3,
-    width: "100%",
-    backgroundColor: "#ccc",
-    top: 12,
-    zIndex: -1,
+    backgroundColor: "#E0E0E0",
   },
-  lineActive: { backgroundColor: "#2e7d32" },
-  actionButton: {
+  lineActive: { backgroundColor: "#047857" },
+  productCard: {
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#2e7d32",
-    padding: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3E5F5",
+  },
+  productImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  productInfo: { flex: 1 },
+  productName: { color: "#212121", fontWeight: "600", fontSize: 14 },
+  productQtyPrice: { color: "#757575", fontSize: 13 },
+  productTotal: { color: "#047857", fontWeight: "bold", fontSize: 15 },
+  addressContainer: { flexDirection: "row", marginTop: 8 },
+  addressText: {
+    color: "#424242",
+    fontSize: 14,
+    marginLeft: 8,
+    lineHeight: 22,
+  },
+  paymentRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
+  paymentText: { color: "#424242", fontWeight: "600", fontSize: 15 },
+  actions: { marginTop: 16, gap: 12 },
+  button: {
     borderRadius: 10,
-  },
-  actionButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-
-
-  paymentRow: {
-    flexDirection: "row",                                                                                       
+    paddingVertical: 14,
     alignItems: "center",
-    marginTop: 5,
   },
-  paymentText: {
-    fontSize: 15,
-    color: "#555",
-    fontWeight: "600",
+  primaryButton: { backgroundColor: "#047857" },
+  secondaryButton: {
+    backgroundColor: "#FFF",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
   },
+  buttonText: { fontSize: 16, fontWeight: "bold" },
+  primaryButtonText: { color: "#FFF" },
+  secondaryButtonText: { color: "#cf2525ff" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  errorText: { color: "#D32F2F", fontSize: 16 },
 });
-
