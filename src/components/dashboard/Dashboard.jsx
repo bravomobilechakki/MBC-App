@@ -13,48 +13,45 @@ import {
   Alert,
 } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
-import Svg, { Path } from "react-native-svg";
 import SummaryApi from "../../common";
 
 const Dashboard = ({ navigation }) => {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const vanTranslateX = useRef(new Animated.Value(400)).current; // start from right
 
-  // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
+  const slideAnim = useRef(new Animated.Value(40)).current;
+  const vanTranslateX = useRef(new Animated.Value(400)).current;
 
-  // Animate van and component entrance
+  // Run animations
   useEffect(() => {
-    const animateVan = () => {
-      vanTranslateX.setValue(400); // reset to right side
+    const runVan = () => {
+      vanTranslateX.setValue(400);
       Animated.timing(vanTranslateX, {
-        toValue: -200, // move across to left
+        toValue: -200,
         duration: 4000,
         easing: Easing.linear,
         useNativeDriver: true,
-      }).start(() => animateVan()); // loop forever
+      }).start(() => runVan());
     };
-    animateVan();
+    runVan();
 
-    // Entrance animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 700,
         useNativeDriver: true,
       }),
       Animated.spring(slideAnim, {
         toValue: 0,
-        friction: 8,
+        friction: 6,
         useNativeDriver: true,
       }),
     ]).start();
-  }, [vanTranslateX, fadeAnim, slideAnim]);
+  }, []);
 
-  // Fetch categories
+  // Load categories
   const loadDashboard = async () => {
     setLoadingCategories(true);
     try {
@@ -63,16 +60,14 @@ const Dashboard = ({ navigation }) => {
         headers: { "Content-Type": "application/json" },
       });
 
-      if (!response.ok) throw new Error("Failed to fetch categories");
-
       const data = await response.json();
-      if (data.success && Array.isArray(data.data)) {
+      if (data?.success && Array.isArray(data?.data)) {
         setCategories(data.data);
       } else {
         setCategories([]);
       }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+    } catch {
+      setCategories([]);
     } finally {
       setLoadingCategories(false);
       setRefreshing(false);
@@ -85,71 +80,46 @@ const Dashboard = ({ navigation }) => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    setCategories([]);
     loadDashboard();
   };
 
-  // Improved WhatsApp function
+  // WhatsApp Order
   const openWhatsAppOrder = async () => {
-    const phoneNumber = "7568207000";
-    const message = "I'd like to place an order.";
-    const appURL = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(
-      message
+    const phone = "7568207000";
+    const msg = "I'd like to place an order.";
+
+    const appURL = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(
+      msg
     )}`;
-    const webURL = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-      message
-    )}`;
+    const webURL = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 
     try {
       const supported = await Linking.canOpenURL(appURL);
-      if (supported) {
-        await Linking.openURL(appURL);
-      } else {
-        await Linking.openURL(webURL);
-      }
-    } catch (error) {
-      console.error("Error opening WhatsApp:", error);
-      Alert.alert(
-        "WhatsApp Error",
-        "Unable to open WhatsApp. Please try again."
-      );
+      await Linking.openURL(supported ? appURL : webURL);
+    } catch {
+      Alert.alert("Error", "Unable to open WhatsApp");
     }
   };
 
-  // Navigate to Booking
-  const handleBookVen = () => {
-    navigation.navigate("Booking");
-  };
+  const goToBooking = () => navigation.navigate("Booking");
 
   return (
     <Animated.ScrollView
       style={[styles.container, { opacity: fadeAnim }]}
       refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          colors={["#e0d6a7ff"]}
-        />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {/* Header */}
-      <Animated.View
-        style={{
-          transform: [{ translateY: slideAnim }],
-        }}
-      >
+      {/* HEADER */}
+      <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
         <View style={styles.header}>
           <Text style={styles.headerText}>🌟 All Featured</Text>
+
           <View style={styles.sortFilter}>
-            <TouchableOpacity
-              onPress={openWhatsAppOrder}
-              activeOpacity={0.7}
-              style={styles.whatsappButton}
-            >
+            <TouchableOpacity onPress={openWhatsAppOrder} style={styles.whatsappButton}>
               <Image
                 source={require("../../images/whatsapp.png")}
                 style={styles.menuIcon}
-                resizeMode="contain"
               />
             </TouchableOpacity>
 
@@ -160,156 +130,87 @@ const Dashboard = ({ navigation }) => {
         </View>
       </Animated.View>
 
-      {/* Categories */}
-      <Animated.View
-        style={{
-          transform: [{ translateY: slideAnim }],
-        }}
-      >
+      {/* CATEGORIES */}
+      <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={styles.categories}
         >
           {loadingCategories ? (
-            <ActivityIndicator size="small" color="#007bff" />
+            <ActivityIndicator />
           ) : categories.length > 0 ? (
-            categories.map((cat, index) => (
-              <Animated.View
+            categories.map((cat) => (
+              <TouchableOpacity
                 key={cat._id}
-                style={{
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      translateY: slideAnim.interpolate({
-                        inputRange: [0, 50],
-                        outputRange: [0, 50 + index * 10],
-                      }),
-                    },
-                  ],
-                }}
+                style={styles.categoryItem}
+                onPress={() =>
+                  navigation.navigate("ProductsPage", { categoryId: cat._id })
+                }
               >
-                <TouchableOpacity
-                  style={styles.categoryItem}
-                  onPress={() =>
-                    navigation.navigate("ProductsPage", { categoryId: cat._id })
-                  }
-                >
-                  <Image
-                    source={{ uri: cat.image }}
-                    style={styles.categoryImage}
-                  />
-                  <Text style={styles.categoryText}>{cat.name}</Text>
-                </TouchableOpacity>
-              </Animated.View>
+                <Image source={{ uri: cat.image }} style={styles.categoryImage} />
+                <Text style={styles.categoryText}>{cat.name}</Text>
+              </TouchableOpacity>
             ))
           ) : (
-            <Text style={{ color: "#888" }}>No categories found</Text>
+            <Text>No categories found</Text>
           )}
         </ScrollView>
       </Animated.View>
 
-      {/* Offer Banner */}
-      <Animated.View
-        style={{
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        }}
-      >
+      {/* OFFER CARD */}
+      <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
         <View style={styles.offerCard}>
-          <Text style={styles.offerTitle}>10-20% OFF</Text>
-          <Text style={styles.offerSub}>Now in (product)</Text>
-          <Text style={styles.offerSub}>Multi Grain Flour</Text>
+          <Text style={styles.offerTitle}>10–20% OFF</Text>
+          <Text style={styles.offerSub}>Now in Multi-Grain Flour</Text>
+
           <TouchableOpacity style={styles.shopNowBtn}>
             <Text style={styles.shopNowText}>🛍️ Shop Now →</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>
 
-      {/* 🏛️ Deal of the Day Section */}
-      <Animated.View
-        style={{
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        }}
-      >
-        <View style={styles.dealCard}>
-          <View style={{ flex: 1 }}>
-            <View style={styles.titleContainer}>
-              <View style={styles.titleHighlight} />
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={styles.dealTitle}>Book Your Van</Text>
+      {/* DEAL CARD - NAVIGATES TO BOOKING PAGE */}
+      <Animated.View style={{ transform: [{ translateY: slideAnim }] }}>
+        <TouchableOpacity activeOpacity={0.8} onPress={goToBooking}>
+          <View style={styles.dealCard}>
+            {/* Van Animation */}
+            <Animated.View
+              style={[
+                styles.vanAnim,
+                { transform: [{ translateX: vanTranslateX }] },
+              ]}
+            >
+              <Image
+                source={require("../../images/delivery-van.png")}
+                style={{ width: 40, height: 40 }}
+              />
+            </Animated.View>
 
-                {/* 🚐 Animated Van */}
-                <Animated.View
-                  style={[
-                    {
-                      transform: [
-                        { translateX: vanTranslateX },
-                        { scaleX: 1 },
-                      ],
-                    },
-                    { position: "absolute", zIndex: 10, top: -20, left: 0 },
-                  ]}
-                >
-                  <Animated.Image
-                    source={require("../../images/delivery-van.png")}
-                    style={{ width: 30, height: 30, marginBottom: 3 }}
-                    resizeMode="contain"
-                  />
-                </Animated.View>
-              </View>
+            <Text style={styles.dealTitle}>Premium Grain Services</Text>
+            <Text style={styles.dealSubText}>
+              Finest grinding with doorstep delivery
+            </Text>
 
-              <Text style={styles.dealSubText}>
-                Premium grinding & delivery service
-              </Text>
-            </View>
-
-            {/* Zigzag mini buttons */}
-            <View style={styles.miniBtnContainer}>
+            {/* Features */}
+            <View style={styles.featureRow}>
               {[
-                { text: "🌾 Free Grinding", color: "#a50d0dff" },
-                { text: "🚚 Free Delivery", color: "#8b0000ff" },
-                
-              ].map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  activeOpacity={0.8}
-                  style={[
-                    styles.zigzagButton,
-                    { shadowColor: item.color },
-                  ]}   
-                >
-                  <Svg
-                    height="35"
-                    width="100"
-                    viewBox="0 0 100 35"
-                    style={styles.zigzagSvg}
-                  >
-                    <Path
-                      d="M10,0 Q0,0 0,10 L0,25 Q0,35 10,35 L90,35 Q100,35 100,25 L100,10 Q100,0 90,0 Z"
-                      fill={item.color}
-                    />
-                  </Svg>
-                  <Text style={styles.zigzagText}>{item.text}</Text>
-                </TouchableOpacity>
+                "🌾 Cool Grinding",
+                "🚚 Free Delivery",
+                "⚙️ Ultra-Fine Grinding",
+              ].map((label, i) => (
+                <View key={i} style={styles.featureChip}>
+                  <Text style={styles.featureChipText}>{label}</Text>
+                </View>
               ))}
             </View>
-          </View>
 
-          {/* Book Van Button */}
-          <View style={styles.actionsColumn}>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={styles.venButton}
-              onPress={handleBookVen}
-            >
-              <View style={styles.venContent}>
-                <Text style={styles.venLabel}>Book Your Van →</Text>
-              </View>
-            </TouchableOpacity>
+            {/* Book Button */}
+            <View style={styles.bookBtn}>
+              <Text style={styles.bookBtnText}>Book Your Service →</Text>
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
       </Animated.View>
     </Animated.ScrollView>
   );
@@ -318,57 +219,69 @@ const Dashboard = ({ navigation }) => {
 export default Dashboard;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    padding: 12,
+  },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  menuIcon: {
-    width: 30,
-    height: 30,
-  },
-  whatsappButton: {
-    backgroundColor: "#25D36620",
-    borderRadius: 50,
-    padding: 6,
-    marginRight: 8,
-  },
+
   headerText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     marginTop: 20,
-    marginBottom: 15,
   },
-  sortFilter: { flexDirection: "row", alignItems: "center" },
+
+  menuIcon: { width: 30, height: 30 },
+
+  whatsappButton: {
+    padding: 6,
+    backgroundColor: "#25D36620",
+    borderRadius: 50,
+    marginRight: 8,
+  },
+
+  sortFilter: { flexDirection: "row" },
+
   filterBtn: {
-    marginHorizontal: 5,
     padding: 6,
     backgroundColor: "#eee",
     borderRadius: 8,
   },
-  categories: { marginVertical: 15 },
+
+  categories: { marginTop: 20 },
+
   categoryItem: {
     alignItems: "center",
     marginRight: 15,
-    marginBottom: 25,
-    marginTop: 15,
   },
+
   categoryImage: {
     width: 60,
     height: 60,
-    borderRadius: 30,
+    borderRadius: 40,
     backgroundColor: "#ddd",
   },
+
   categoryText: { marginTop: 5, fontSize: 12 },
+
+  /* OFFER CARD */
   offerCard: {
-    backgroundColor: "#b8af9dff",
-    borderRadius: 12,
+    backgroundColor: "#b8af9d",
     padding: 20,
-    marginBottom: 15,
+    borderRadius: 12,
+    marginVertical: 15,
   },
-  offerTitle: { fontSize: 22, fontWeight: "bold", color: "#fff" },
-  offerSub: { fontSize: 14, color: "#fff", marginTop: 2 },
+
+  offerTitle: { color: "#fff", fontSize: 22, fontWeight: "bold" },
+
+  offerSub: { color: "#fff", marginTop: 4 },
+
   shopNowBtn: {
     marginTop: 10,
     borderWidth: 1,
@@ -376,104 +289,79 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
   },
+
   shopNowText: { color: "#fff", fontWeight: "bold" },
+
+  /* DEAL CARD */
   dealCard: {
-    backgroundColor: "#f38c8cff",
-    borderRadius: 14,
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    padding: 18,
+    marginTop: 10,
+    elevation: 4,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  miniBtnContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  zigzagButton: {
-    width: 95,
-    height: 35,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 30,
-    overflow: "hidden",
-    marginRight: 8,
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  zigzagSvg: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-  },
-  zigzagText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 10,
-    zIndex: 1,
-  },
-  actionsColumn: {
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    marginLeft: 12,
-  },
-  venButton: {
-    backgroundColor: "#0f1724",
-    borderRadius: 999,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: 130,
-    borderWidth: 1.5,
-    borderColor: "#f6c84c",
-    shadowColor: "#f6c84c",
     shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 12,
-    marginTop: 20,
-    elevation: 6,
-    marginBottom: 9,
+    shadowRadius: 6,
+    borderWidth: 1,
+    borderColor: "#f0f0f0",
+    overflow: "hidden",
   },
-  venContent: { flexDirection: "row", alignItems: "center" },
-  venLabel: {
-    color: "#f6c84c",
-    fontWeight: "800",
-    fontSize: 14,
-    letterSpacing: 0.3,
-  },
-  titleContainer: {
-    marginBottom: 10,
-    position: "relative",
-    paddingVertical: 6,
-    alignItems: "flex-start",
-  },
-  titleHighlight: {
+
+  vanAnim: {
     position: "absolute",
-    top: 12,
-    left: 0,
-    right: 0,
-    height: 14,
-    borderRadius: 8,
-  },
-  dealTitle: {
-    fontSize: 15,
-    fontWeight: "900",
-    color: "#810d0dff",
-    letterSpacing: 0.5,
+    top: 10,
+    left: -70,
     zIndex: 2,
   },
+
+  dealTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#222",
+    marginTop: 30,
+  },
+
   dealSubText: {
-    fontSize: 10,
+    fontSize: 12,
     color: "#666",
-    marginTop: 2,
-    fontStyle: "italic",
+    marginTop: 4,
+    marginBottom: 15,
+  },
+
+  featureRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  featureChip: {
+    flex: 1,
+    backgroundColor: "#fff7e6",
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ffd88c",
+    marginRight: 8,
+  },
+
+  featureChipText: {
+    fontSize: 11,
+    textAlign: "center",
+    fontWeight: "700",
+    color: "#7c4a00",
+  },
+
+  bookBtn: {
+    marginTop: 20,
+    backgroundColor: "#ffcc66",
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+
+  bookBtnText: {
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#663c00",
   },
 });

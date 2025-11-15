@@ -9,6 +9,8 @@ import {
   Image,
   ScrollView,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import SummaryApi from '../../common';
@@ -35,7 +37,9 @@ const SignUp = ({ navigation }) => {
   // SEND OTP HANDLER
   // =========================
   const handleSendOtp = async () => {
-    if (!mobile.trim()) return Alert.alert('Error', 'Please enter your mobile number.');
+    if (!/^\d{10}$/.test(mobile.trim())) {
+      return Alert.alert('Invalid Mobile Number', 'Please enter a valid 10-digit mobile number.');
+    }
     setIsLoading(true);
     try {
       const response = await fetch(SummaryApi.signUP.url, {
@@ -61,7 +65,19 @@ const SignUp = ({ navigation }) => {
         } else {
           setTimeout(() => inputsRefs.current[0]?.focus(), 100);
         }
-      } else Alert.alert('Error', result.message || 'Failed to send OTP.');
+      } else {
+        if (result.message && result.message.toLowerCase().includes('already exist')) {
+          Alert.alert(
+            'User Exists',
+            'This mobile number is already registered. Please log in.',
+            [
+              { text: 'OK', onPress: () => navigation.navigate('Login') }
+            ]
+          );
+        } else {
+          Alert.alert('Error', result.message || 'Failed to send OTP.');
+        }
+      }
     } catch (error) {
       Alert.alert('Error', 'Something went wrong.');
     } finally {
@@ -101,6 +117,9 @@ const SignUp = ({ navigation }) => {
     if (otp.length !== OTP_LENGTH) return Alert.alert('Error', `Please enter ${OTP_LENGTH}-digit OTP.`);
     if (!name.trim() || !street.trim() || !city.trim() || !stateField.trim() || !postalCode.trim()) {
       return Alert.alert('Error', 'Please fill all profile fields.');
+    }
+    if (!/^\d{6}$/.test(postalCode.trim())) {
+      return Alert.alert('Invalid Pincode', 'Please enter a valid 6-digit pincode.');
     }
     setIsLoading(true);
     try {
@@ -146,143 +165,150 @@ const SignUp = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sign Up</Text>
-      </View>
-      <ScrollView contentContainerStyle={styles.innerContainer}>
-        <Text style={styles.title}>Create an account</Text>
-
-        {/* MOBILE INPUT */}
-        <View style={styles.inputContainer}>
-          <Ionicons name="call-outline" size={20} color="#777" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Mobile number"
-            placeholderTextColor="#777"
-            keyboardType="phone-pad"
-            value={mobile}
-            onChangeText={setMobile}
-          />
-        </View>
-
-        {/* OTP SECTION */}
-        {showOTP && !isVerified && (
-          <>
-            <Text style={styles.agreeText}>Enter the OTP sent to your number</Text>
-            <View style={styles.otpContainer}>
-              {otpDigits.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  style={styles.otpInput}
-                  keyboardType="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChangeText={(text) => handleOtpChange(text, index)}
-                  ref={(ref) => (inputsRefs.current[index] = ref)}
-                  textAlign="center"
-                />
-              ))}
-            </View>
-
-            {/* PROFILE FIELDS */}
-            <View style={styles.inputContainer}>
-              <Ionicons name="person-outline" size={20} color="#777" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Name"
-                placeholderTextColor="#777"
-                value={name}
-                onChangeText={setName}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Ionicons name="home-outline" size={20} color="#777" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Street Address"
-                placeholderTextColor="#777"
-                value={street}
-                onChangeText={setStreet}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Ionicons name="location-outline" size={20} color="#777" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="City"
-                placeholderTextColor="#777"
-                value={city}
-                onChangeText={setCity}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Ionicons name="map-outline" size={20} color="#777" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="State"
-                placeholderTextColor="#777"
-                value={stateField}
-                onChangeText={setStateField}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#777" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Postal Code"
-                placeholderTextColor="#777"
-                keyboardType="numeric"
-                value={postalCode}
-                onChangeText={setPostalCode}
-              />
-            </View>
-
-            <TouchableOpacity style={styles.button} onPress={() => handleVerifyOTP()} disabled={isLoading}>
-              <Text style={styles.buttonText}>{isLoading ? 'Verifying...' : 'Verify OTP & Submit'}</Text>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {/* SEND OTP BUTTON */}
-        {!showOTP && (
-          <TouchableOpacity style={styles.button} onPress={handleSendOtp} disabled={isLoading}>
-            <Text style={styles.buttonText}>{isLoading ? 'Sending...' : 'Send OTP'}</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>
-        )}
+          <Text style={styles.headerTitle}>Sign Up</Text>
+        </View>
+        <ScrollView contentContainerStyle={styles.innerContainer}>
+          <Text style={styles.title}>Create an account</Text>
 
-        {/* SOCIAL LOGIN + LOGIN LINK */}
-        {!showOTP && (
-          <>
-            <Text style={styles.orText}>- OR Continue with -</Text>
-            <View style={styles.socialContainer}>
-              <TouchableOpacity style={styles.socialButton}>
-                <Image source={require('../../images/google.png')} style={styles.socialIcon} />
+          {/* MOBILE INPUT */}
+          <View style={styles.inputContainer}>
+            <Ionicons name="call-outline" size={20} color="#777" style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Mobile number"
+              placeholderTextColor="#777"
+              keyboardType="phone-pad"
+              value={mobile}
+              onChangeText={setMobile}
+              maxLength={10}
+            />
+          </View>
+
+          {/* OTP SECTION */}
+          {showOTP && !isVerified && (
+            <>
+              <Text style={styles.agreeText}>Enter the OTP sent to your number</Text>
+              <View style={styles.otpContainer}>
+                {otpDigits.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    style={styles.otpInput}
+                    keyboardType="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChangeText={(text) => handleOtpChange(text, index)}
+                    ref={(ref) => (inputsRefs.current[index] = ref)}
+                    textAlign="center"
+                  />
+                ))}
+              </View>
+
+              {/* PROFILE FIELDS */}
+              <View style={styles.inputContainer}>
+                <Ionicons name="person-outline" size={20} color="#777" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Name"
+                  placeholderTextColor="#777"
+                  value={name}
+                  onChangeText={setName}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons name="home-outline" size={20} color="#777" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Street Address"
+                  placeholderTextColor="#777"
+                  value={street}
+                  onChangeText={setStreet}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons name="location-outline" size={20} color="#777" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="City"
+                  placeholderTextColor="#777"
+                  value={city}
+                  onChangeText={setCity}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons name="map-outline" size={20} color="#777" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="State"
+                  placeholderTextColor="#777"
+                  value={stateField}
+                  onChangeText={setStateField}
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Ionicons name="mail-outline" size={20} color="#777" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Postal Code"
+                  placeholderTextColor="#777"
+                  keyboardType="numeric"
+                  value={postalCode}
+                  onChangeText={setPostalCode}
+                  maxLength={6}
+                />
+              </View>
+
+              <TouchableOpacity style={styles.button} onPress={() => handleVerifyOTP()} disabled={isLoading}>
+                <Text style={styles.buttonText}>{isLoading ? 'Verifying...' : 'Verify OTP & Submit'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton}>
-                <Image source={require('../../images/apple-logo.png')} style={styles.socialIcon} />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.socialButton}>
-                <Image source={require('../../images/facebook.png')} style={styles.socialIcon} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.loginContainer}>
-              <Text style={styles.loginText}>I Already Have an Account </Text>
-              <TouchableOpacity onPress={handleLogin}>
-                <Text style={styles.loginLink}>Login</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+            </>
+          )}
+
+          {/* SEND OTP BUTTON */}
+          {!showOTP && (
+            <TouchableOpacity style={styles.button} onPress={handleSendOtp} disabled={isLoading}>
+              <Text style={styles.buttonText}>{isLoading ? 'Sending...' : 'Send OTP'}</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* SOCIAL LOGIN + LOGIN LINK */}
+          {!showOTP && (
+            <>
+              <Text style={styles.orText}>- OR Continue with -</Text>
+              <View style={styles.socialContainer}>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../../images/google.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../../images/apple-logo.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../../images/facebook.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.loginContainer}>
+                <Text style={styles.loginText}>I Already Have an Account </Text>
+                <TouchableOpacity onPress={handleLogin}>
+                  <Text style={styles.loginLink}>Login</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
